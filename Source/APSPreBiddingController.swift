@@ -75,16 +75,13 @@ class APSPreBiddingController {
     /// - Parameter heliumPlacementName: Helium placement name.
     /// - Parameter completion: Closure invoked when the token fetch completes.
     func fetchPrebiddingToken(heliumPlacementName: String, completion: @escaping APSPreBidder.PrebidCallback) {
-        // Prebidder with the specified Helium placement name doesn't exist.
-        var prebidder: APSPreBidder?
-        queue.sync {
-            prebidder = bidders[heliumPlacementName]
+        // Get the prebidder for the placement.
+        guard let prebidder = queue.sync(execute: {
+            bidders[heliumPlacementName]
+        }) else {
+            return completion(.failure(.prebidderInstanceNotFound))
         }
-        
-        guard let prebidder = prebidder else {
-            return completion(.failure(.prebidderInstanceNotFound))            
-        }
-        
+
         prebidder.fetchPrebiddingToken(completion: completion)
     }
     
@@ -95,12 +92,12 @@ class APSPreBiddingController {
         // Disallow pre-bidding due to COPPA restrictions.
         guard isDisabledDueToCOPPA == false else { return nil }
         
-        // Prebidder with the specified Helium placement name doesn't exist.
-        var prebidder: APSPreBidder?
-        queue.sync {
-            prebidder = bidders[heliumPlacementName]
+        // Get the prebidder for the placement.
+        guard let prebidder = queue.sync(execute: {
+            bidders[heliumPlacementName]
+        }) else {
+            return nil
         }
-        guard let prebidder = prebidder else { return nil }
 
         // Consume the bidding payload.
         return prebidder.popPrebid()
