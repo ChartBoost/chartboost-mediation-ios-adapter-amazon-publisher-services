@@ -6,7 +6,7 @@
 import Foundation
 
 /// Supported Amazon APS ad formats
-public enum APSAdFormat: Int {
+enum APSAdFormat: Int {
     /// Banner format
     case banner = 0
     
