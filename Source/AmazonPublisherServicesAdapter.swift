@@ -8,7 +8,7 @@ import HeliumSdk
 import DTBiOSSDK
 import UIKit
 
-final class AmazonPublisherServicesAdapter: NSObject, ModularPartnerAdapter {
+final class AmazonPublisherServicesAdapter: ModularPartnerAdapter {
     /// Get the version of the partner SDK.
     let partnerSDKVersion: String = DTBAds.version()
     
