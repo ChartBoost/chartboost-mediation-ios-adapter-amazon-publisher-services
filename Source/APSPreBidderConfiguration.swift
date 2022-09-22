@@ -27,3 +27,22 @@ struct APSPreBidderConfiguration {
         self.heliumPlacement = heliumPlacement
     }
 }
+
+extension APSPreBidderConfiguration {
+    static func makeConfigurations(from jsonArray: [[String : Any]]) -> [APSPreBidderConfiguration]? {
+        let decoder = JSONDecoder()
+        var prebidderConfigurations = [APSPreBidderConfiguration]()
+        jsonArray.forEach { json in
+            guard let data = try? JSONSerialization.data(withJSONObject: json, options: []) else {
+                return
+            }
+            guard let preBidSettings = try? decoder.decode(APSPreBidSettings.self, from: data) else {
+                return
+            }
+            let settings = json["settings"] as? [String: Any]
+            let configuration = preBidSettings.asAPSPreBidderConfiguration(settings: settings)
+            prebidderConfigurations.append(configuration)
+        }
+        return prebidderConfigurations
+    }
+}
