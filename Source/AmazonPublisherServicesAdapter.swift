@@ -121,7 +121,7 @@ final class AmazonPublisherServicesAdapter: ModularPartnerAdapter {
                 let error = self.error(.fetchBidderInfoFailure(request), error: error)
                 self.log(.fetchBidderInfoFailed(request, error: error))
             }
-            return completion([:])
+            completion([:])
         }
     }
     
@@ -129,12 +129,14 @@ final class AmazonPublisherServicesAdapter: ModularPartnerAdapter {
     /// - Parameter applies: true if GDPR applies, false otherwise.
     func setGDPRApplies(_ applies: Bool) {
         gdprApplies = applies
+        updateGDPRConsent()
    }
     
     /// Notify the partner SDK of the GDPR consent status as determined by the Helium SDK.
     /// - Parameter status: The user's current GDPR consent status.
     func setGDPRConsentStatus(_ status: GDPRConsentStatus) {
         gdprStatus = status
+        updateGDPRConsent()
     }
 
     private func updateGDPRConsent() {
