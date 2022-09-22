@@ -13,8 +13,8 @@ import DTBiOSSDK
 /// during construction of the `APSPreBidderConfiguration` structure that is actually used by the
 /// `APSPreBiddingController` instance in the adapter.
 struct APSPreBidSettings: Decodable {
-    /// Helium ad type (as an integer) associated with the pre-bid settings.
-    let heliumAdType: Int
+    /// Helium ad type associated with the pre-bid settings.
+    let heliumAdType: AdType
 
     /// Helium placement identifier.
     let heliumPlacement: String
@@ -23,15 +23,13 @@ struct APSPreBidSettings: Decodable {
     let networkPlacement: String
 }
 
-extension APSPreBidSettings {
-    var heliumAdTypeEnum: AdType {
-        AdType(rawValue: heliumAdType) ?? .unselected
-    }
+extension AdType: Codable {
+
 }
 
 extension APSPreBidSettings {
     func asAPSPreBidderConfiguration(settings: [String: Any]?) -> APSPreBidderConfiguration {
-        let format: APSAdFormat = heliumAdTypeEnum == .banner ? .banner : .interstitial
+        let format: APSAdFormat = heliumAdType == .banner ? .banner : .interstitial
         return APSPreBidderConfiguration(heliumPlacement: heliumPlacement, amazonSlotUUID: networkPlacement, format: format, configuration: settings)
     }
 }
