@@ -7,7 +7,7 @@
 import Foundation
 
 /// Prebidder configuration.
-class APSPreBidderConfiguration {
+struct APSPreBidderConfiguration {
     /// Amazon slot UUID associated with the Helium placement name.
     let amazonSlotUUID: String
     
