@@ -6,44 +6,10 @@
 import DTBiOSSDK
 import Foundation
 
-/// PreBidder error
-enum APSPreBidderError: Error, LocalizedError {
-    case unexpectedFailure
-    case prebidderInstanceNotFound
-    case loadAlreadyInProgress
-
-    case networkError
-    case networkTimeout
-    case noFill
-    case internalError
-    case requestError
-
-    var errorDescription: String? {
-        switch self {
-        case .unexpectedFailure:
-            return "unexpected failure"
-        case .prebidderInstanceNotFound:
-            return "prebidder instance not found"
-        case .loadAlreadyInProgress:
-            return "load already in progress"
-        case .networkError:
-            return "network error"
-        case .networkTimeout:
-            return "network timeout"
-        case .noFill:
-            return "no fill"
-        case .internalError:
-            return "internal error"
-        case .requestError:
-            return "request error"
-        }
-    }
-}
-
 /// Pre-bidder for a single placement.
 /// This class is responsible for pre-bidding and caching of responses and creatives.
 class APSPreBidder {
-    typealias PrebidCallback = (Result<String?, APSPreBidderError>) -> Void
+    typealias PrebidCallback = (Result<String?, FetchError>) -> Void
 
     // MARK: - State Properties
     
@@ -151,6 +117,42 @@ class APSPreBidder {
     }
 }
 
+extension APSPreBidder {
+    /// PreBidder error
+    enum FetchError: Error, LocalizedError {
+        case unexpectedFailure
+        case prebidderInstanceNotFound
+        case loadAlreadyInProgress
+
+        case networkError
+        case networkTimeout
+        case noFill
+        case internalError
+        case requestError
+
+        var errorDescription: String? {
+            switch self {
+            case .unexpectedFailure:
+                return "unexpected failure"
+            case .prebidderInstanceNotFound:
+                return "prebidder instance not found"
+            case .loadAlreadyInProgress:
+                return "load already in progress"
+            case .networkError:
+                return "network error"
+            case .networkTimeout:
+                return "network timeout"
+            case .noFill:
+                return "no fill"
+            case .internalError:
+                return "internal error"
+            case .requestError:
+                return "request error"
+            }
+        }
+    }
+}
+
 extension APSPreBidder: DTBAdCallback {
     // MARK: - DTBAdCallback
     
@@ -159,7 +161,7 @@ extension APSPreBidder: DTBAdCallback {
         amazonPricePoint = nil
         amazonMediationHints = nil
         isLoading = false
-        prebidCallback?(.failure(error.asAPSPreBidderError))
+        prebidCallback?(.failure(error.asFetchError))
         prebidCallback = nil
     }
     
@@ -181,7 +183,7 @@ extension APSPreBidder: DTBAdCallback {
 }
 
 extension DTBAdError {
-    var asAPSPreBidderError: APSPreBidderError {
+    var asFetchError: APSPreBidder.FetchError {
         switch self {
         case NETWORK_ERROR: return .networkError
         case NETWORK_TIMEOUT: return .networkTimeout
