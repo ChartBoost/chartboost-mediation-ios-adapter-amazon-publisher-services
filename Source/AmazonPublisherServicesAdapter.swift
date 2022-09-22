@@ -109,9 +109,13 @@ final class AmazonPublisherServicesAdapter: ModularPartnerAdapter {
             guard let self = self else { return }
             switch result {
             case .success(let pricePoint):
-                self.log(.fetchBidderInfoSucceeded(request))
                 if let pricePoint = pricePoint {
+                    self.log(.fetchBidderInfoSucceeded(request))
                     return completion([request.heliumPlacement: pricePoint])
+                }
+                else {
+                    let error = self.error(.fetchBidderInfoFailure(request), description: "Price point value not supplied")
+                    self.log(.fetchBidderInfoFailed(request, error: error))
                 }
             case .failure(let error):
                 let error = self.error(.fetchBidderInfoFailure(request), error: error)
