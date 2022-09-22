@@ -83,7 +83,7 @@ final class AmazonPublisherServicesAdapter: ModularPartnerAdapter {
                 completion(nil)
             }
             else {
-                let error = error(.setUpFailure, description: "\(partnerDisplayName) failed to be ready within the expected timeframe of 250ms")
+                let error = error(.setUpFailure, description: "Failed to be ready within the expected timeframe of 250ms")
                 log(.setUpFailed(error))
                 completion(error)
             }
