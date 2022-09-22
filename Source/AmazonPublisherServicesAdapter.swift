@@ -114,7 +114,7 @@ final class AmazonPublisherServicesAdapter: ModularPartnerAdapter {
                     return completion([request.heliumPlacement: pricePoint])
                 }
             case .failure(let error):
-                let error = self.error(.fetchBidderInfoFailure(request), description: error.localizedDescription)
+                let error = self.error(.fetchBidderInfoFailure(request), error: error)
                 self.log(.fetchBidderInfoFailed(request, error: error))
             }
             return completion([:])
