@@ -24,9 +24,7 @@ extension AmazonPublisherServicesAdAdapter {
             return
         }
 
-        let width = request.size?.width ?? 320
-        let height = request.size?.height ?? 50
-        let frame = CGRect(x: 0, y: 0, width: width, height: height)
+        let frame = CGRect(origin: .zero, size: request.size ?? IABStandardAdSize)
 
         // Fetch the creative from the mediation hints.
         let adLoader = DTBAdBannerDispatcher(adFrame: frame, delegate: self)
