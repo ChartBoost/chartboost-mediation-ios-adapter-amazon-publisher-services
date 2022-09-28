@@ -14,7 +14,7 @@ import DTBiOSSDK
 /// `APSPreBiddingController` instance in the adapter.
 struct APSPreBidSettings: Decodable {
     /// Helium ad type associated with the pre-bid settings.
-    let heliumAdType: AdType
+    let heliumAdType: HeliumAdType
 
     /// Helium placement identifier.
     let heliumPlacement: String
@@ -23,8 +23,11 @@ struct APSPreBidSettings: Decodable {
     let networkPlacement: String
 }
 
-extension AdType: Codable {
-
+enum HeliumAdType: Int, Codable {
+    case unselected
+    case interstitial
+    case rewarded
+    case banner
 }
 
 extension APSPreBidSettings {
