@@ -135,7 +135,6 @@ final class AmazonPublisherServicesAdapter: ModularPartnerAdapter {
     /// Notify the partner SDK of the GDPR consent status as determined by the Helium SDK.
     /// - Parameter status: The user's current GDPR consent status.
     func setGDPRConsentStatus(_ status: GDPRConsentStatus) {
-        log(.setGDPRConsent(status))
         gdprStatus = status
         updateGDPRConsent()
     }
@@ -157,17 +156,19 @@ final class AmazonPublisherServicesAdapter: ModularPartnerAdapter {
         //
         // The CMP flavor is set again in the event that `setGDPRConsentStatus()` is
         // called before `setGDPRApplies()` by the publisher.
+        log(.privacyUpdated(setting: "'CmpFlavor DTBCMPFlavor'", value: DTBCMPFlavor.MOPUB_CMP))
         Self.amazon.setCmpFlavor(.MOPUB_CMP)
 
         // Translate the explicit consent into the Amazon equivalent.
         let consentStatus: DTBConsentStatus = gdprStatus == .granted ? .EXPLICIT_YES : .EXPLICIT_NO
+        log(.privacyUpdated(setting: "'ConsentStatus DTBConsentStatus'", value: consentStatus))
         Self.amazon.setConsentStatus(consentStatus)
     }
 
     /// Notify the partner SDK of the COPPA subjectivity as determined by the Helium SDK.
     /// - Parameter isSubject: True if the user is subject to COPPA, false otherwise.
     func setUserSubjectToCOPPA(_ isSubject: Bool) {
-        log(.setCOPPAConsent(isSubject))
+        log(.privacyUpdated(setting: "'isDisabledDueToCOPPA Bool'", value: isSubject))
 
         // Per Amazon APS documentation:
         // The Children’s Online Privacy Protection Act (COPPA) is a United States federal law that is designed to give parents control over the
@@ -192,7 +193,7 @@ final class AmazonPublisherServicesAdapter: ModularPartnerAdapter {
     ///   - privacyString: The CCPA privacy String.
     func setCCPAConsent(hasGivenConsent: Bool, privacyString: String?) {
         let privacyString = privacyString ?? (hasGivenConsent ? "1YN-" : "1YY-")
-        log(.setCCPAConsent("\(hasGivenConsent), privacyString = \(privacyString)"))
+        log(.privacyUpdated(setting: "'ccpaValue String'", value: privacyString))
 
         prebiddingController.ccpaValue = privacyString
     }
