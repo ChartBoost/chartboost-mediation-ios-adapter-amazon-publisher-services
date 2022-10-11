@@ -30,7 +30,6 @@ extension AmazonPublisherServicesAdAdapter {
             
             // Fetch the creative from the mediation hints.
             let adLoader = DTBAdBannerDispatcher(adFrame: frame, delegate: self)
-            partnerAd = PartnerAd(ad: adLoader, details: [:], request: request)
             adLoader.fetchBannerAd(withParameters: mediationHints)
         }
     }
@@ -38,6 +37,7 @@ extension AmazonPublisherServicesAdAdapter {
 
 extension AmazonPublisherServicesAdAdapter: DTBAdBannerDispatcherDelegate {
     func adDidLoad(_ adView: UIView) {
+        partnerAd = PartnerAd(ad: adView, details: [:], request: request)
         loadCompletion?(.success(partnerAd)) ?? log(.loadResultIgnored)
         loadCompletion = nil
     }
