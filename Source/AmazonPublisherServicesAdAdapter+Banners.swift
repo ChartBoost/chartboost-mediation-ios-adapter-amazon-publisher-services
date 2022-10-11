@@ -31,6 +31,7 @@ extension AmazonPublisherServicesAdAdapter {
             // Fetch the creative from the mediation hints.
             let adLoader = DTBAdBannerDispatcher(adFrame: frame, delegate: self)
             adLoader.fetchBannerAd(withParameters: mediationHints)
+            self.adLoader = adLoader
         }
     }
 }
