@@ -24,17 +24,21 @@ extension AmazonPublisherServicesAdAdapter {
             return
         }
 
-        let frame = CGRect(origin: .zero, size: request.size ?? IABStandardAdSize)
-
-        // Fetch the creative from the mediation hints.
-        let adLoader = DTBAdBannerDispatcher(adFrame: frame, delegate: self)
-        partnerAd = PartnerAd(ad: adLoader, details: [:], request: request)
-        adLoader.fetchBannerAd(withParameters: mediationHints)
+        // APS banners make use of UI-related APIs directly from the thread fectchBannerAd() is called, so we need to do it on the main thread
+        DispatchQueue.main.async { [self] in
+            let frame = CGRect(origin: .zero, size: request.size ?? IABStandardAdSize)
+            
+            // Fetch the creative from the mediation hints.
+            let adLoader = DTBAdBannerDispatcher(adFrame: frame, delegate: self)
+            adLoader.fetchBannerAd(withParameters: mediationHints)
+            self.adLoader = adLoader
+        }
     }
 }
 
 extension AmazonPublisherServicesAdAdapter: DTBAdBannerDispatcherDelegate {
     func adDidLoad(_ adView: UIView) {
+        partnerAd = PartnerAd(ad: adView, details: [:], request: request)
         loadCompletion?(.success(partnerAd)) ?? log(.loadResultIgnored)
         loadCompletion = nil
     }

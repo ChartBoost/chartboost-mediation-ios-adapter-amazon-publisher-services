@@ -24,6 +24,9 @@ final class AmazonPublisherServicesAdAdapter: NSObject, PartnerAdAdapter {
     /// Instance of the prebidding controller.
     let prebiddingController: APSPreBiddingController
 
+    /// The APS ad dispatcher instance used to load an ad. We have strong reference here to keep it alive while the loading is ongoing.
+    var adLoader: DTBAdDispatcher?
+    
     /// The completion handler to notify Helium of ad show completion result.
     var loadCompletion: ((Result<PartnerAd, Error>) -> Void)?
 
