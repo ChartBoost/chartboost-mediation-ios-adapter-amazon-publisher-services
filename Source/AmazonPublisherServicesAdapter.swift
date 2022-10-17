@@ -29,12 +29,6 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
 
     /// Instance of the prebidding controller.
     private let prebiddingController = APSPreBiddingController()
-
-    /// The last value set on `setGDPRApplies(_:)`.
-    private var gdprApplies = false
-
-    /// The last value set on `setGDPRConsentStatus(_:)`.
-    private var gdprStatus: GDPRConsentStatus = .unknown
     
     /// The designated initializer for the adapter.
     /// Helium SDK will use this constructor to create instances of conforming types.
@@ -119,22 +113,11 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         }
     }
     
-    /// Indicates if GDPR applies or not.
-    /// - parameter applies: `true` if GDPR applies, `false` otherwise.
-    func setGDPRApplies(_ applies: Bool) {
-        gdprApplies = applies
-        updateGDPRConsent()
-   }
-    
-    /// Indicates the user's GDPR consent status.
+    /// Indicates if GDPR applies or not and the user's GDPR consent status.
+    /// - parameter applies: `true` if GDPR applies, `false` if not, `nil` if the publisher has not provided this information.
     /// - parameter status: One of the `GDPRConsentStatus` values depending on the user's preference.
-    func setGDPRConsentStatus(_ status: GDPRConsentStatus) {
-        gdprStatus = status
-        updateGDPRConsent()
-    }
-
-    private func updateGDPRConsent() {
-        guard gdprApplies else {
+    func setGDPR(applies: Bool?, status: GDPRConsentStatus) {
+        guard applies == true else {
             return
         }
 
@@ -150,20 +133,18 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         //
         // The CMP flavor is set again in the event that `setGDPRConsentStatus()` is
         // called before `setGDPRApplies()` by the publisher.
-        log(.privacyUpdated(setting: "cmpFlavor", value: DTBCMPFlavor.MOPUB_CMP))
         Self.amazon.setCmpFlavor(.MOPUB_CMP)
+        log(.privacyUpdated(setting: "cmpFlavor", value: DTBCMPFlavor.MOPUB_CMP.rawValue))
 
         // Translate the explicit consent into the Amazon equivalent.
-        let consentStatus: DTBConsentStatus = gdprStatus == .granted ? .EXPLICIT_YES : .EXPLICIT_NO
-        log(.privacyUpdated(setting: "consentStatus", value: consentStatus))
+        let consentStatus: DTBConsentStatus = status == .granted ? .EXPLICIT_YES : .EXPLICIT_NO
         Self.amazon.setConsentStatus(consentStatus)
+        log(.privacyUpdated(setting: "consentStatus", value: consentStatus.rawValue))
     }
 
     /// Indicates if the user is subject to COPPA or not.
     /// - parameter isSubject: `true` if the user is subject, `false` otherwise.
     func setUserSubjectToCOPPA(_ isSubject: Bool) {
-        log(.privacyUpdated(setting: "isDisabledDueToCOPPA", value: isSubject))
-
         // Per Amazon APS documentation:
         // The Children’s Online Privacy Protection Act (COPPA) is a United States federal law that is designed to give parents control over the
         // information collected from their young children online. COPPA prohibits the collection, use, or disclosure of personal information from
@@ -178,7 +159,8 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         // Even if your app is directed at a mixed audience, including people both over and under the age of 13, you may not show ads from APS to
         // users you know are under 13. This applies equally even in an app that is not child-directed. For example, if you ask a user for their age and
         // they indicate they are under 13, you may not show an ad to them that you source from the APS integration and/or TAM.
-        prebiddingController.isDisabledDueToCOPPA = isSubject;
+        prebiddingController.isDisabledDueToCOPPA = isSubject
+        log(.privacyUpdated(setting: "isDisabledDueToCOPPA", value: isSubject))
     }
     
     /// Indicates the CCPA status both as a boolean and as a IAB US privacy string.
@@ -186,9 +168,8 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// - parameter privacyString: A IAB-compliant string indicating the CCPA status.
     func setCCPAConsent(hasGivenConsent: Bool, privacyString: String?) {
         let privacyString = privacyString ?? (hasGivenConsent ? "1YN-" : "1YY-")
-        log(.privacyUpdated(setting: "ccpaValue", value: privacyString))
-
         prebiddingController.ccpaValue = privacyString
+        log(.privacyUpdated(setting: "ccpaValue", value: privacyString))
     }
     
     /// Creates a new ad object in charge of communicating with a single partner SDK ad instance.
