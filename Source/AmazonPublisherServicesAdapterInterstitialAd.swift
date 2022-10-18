@@ -85,7 +85,7 @@ extension AmazonPublisherServicesAdapterInterstitialAd: DTBAdInterstitialDispatc
     }
 
     func interstitialWillPresentScreen(_ interstitial: DTBAdInterstitialDispatcher?) {
-        // NO-OP
+        log(.delegateCallIgnored)
     }
 
     func interstitialDidPresentScreen(_ interstitial: DTBAdInterstitialDispatcher?) {
@@ -95,7 +95,7 @@ extension AmazonPublisherServicesAdapterInterstitialAd: DTBAdInterstitialDispatc
     }
 
     func interstitialWillDismissScreen(_ interstitial: DTBAdInterstitialDispatcher?) {
-        // NO-OP
+        log(.delegateCallIgnored)
     }
 
     func interstitialDidDismissScreen(_ interstitial: DTBAdInterstitialDispatcher?) {
@@ -104,11 +104,11 @@ extension AmazonPublisherServicesAdapterInterstitialAd: DTBAdInterstitialDispatc
     }
 
     func interstitialWillLeaveApplication(_ interstitial: DTBAdInterstitialDispatcher?) {
-        // NO-OP
+        log(.delegateCallIgnored)
     }
 
     func show(fromRootViewController controller: UIViewController) {
-        // NO-OP
+        log(.delegateCallIgnored)
     }
     
     func impressionFired() {
