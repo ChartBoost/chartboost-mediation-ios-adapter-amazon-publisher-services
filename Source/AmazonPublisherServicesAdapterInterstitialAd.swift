@@ -1,0 +1,118 @@
+//
+//  AmazonPublisherServicesAdapterInterstitialAd.swift
+//  ChartboostHeliumAdapterAmazonPublisherServices
+//
+
+import Foundation
+import HeliumSdk
+import DTBiOSSDK
+
+/// The Helium Amazon Publisher Services adapter interstitial ad.
+final class AmazonPublisherServicesAdapterInterstitialAd: AmazonPublisherServicesAdapterAd, PartnerAd {
+    
+    /// The partner ad view to display inline. E.g. a banner view.
+    /// Should be nil for full-screen ads.
+    var inlineView: UIView? { nil }
+        
+    /// The APS ad dispatcher instance used to load an ad. We have strong reference here to keep it alive while the loading is ongoing.
+    private var adLoader: DTBAdInterstitialDispatcher?
+    
+    /// Loads an ad.
+    /// - parameter viewController: The view controller on which the ad will be presented on. Needed on load for some banners.
+    /// - parameter completion: Closure to be performed once the ad has been loaded.
+    func load(with viewController: UIViewController?, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
+        log(.loadStarted)
+        guard !prebiddingController.isDisabledDueToCOPPA else {
+            let error = error(.loadFailure, description: "Loading has been disabled due to COPPA restrictions")
+            log(.loadFailed(error))
+            completion(.failure(error))
+            return
+        }
+        
+        // Validate that there is a bid payload available to fetch.
+        guard let mediationHints = prebiddingController.bidPayload(heliumPlacementName: request.heliumPlacement) else {
+            let error = error(.noPreBidReadyToLoad)
+            log(.loadFailed(error))
+            completion(.failure(error))
+            return
+        }
+
+        loadCompletion = completion
+        
+        // Fetch the creative from the mediation hints.
+        let adLoader = DTBAdInterstitialDispatcher(delegate: self)
+        adLoader.fetchAd(withParameters: mediationHints)
+        self.adLoader = adLoader
+    }
+    
+    /// Shows a loaded ad.
+    /// It will never get called for banner ads. You may leave the implementation blank for that ad format.
+    /// - parameter viewController: The view controller on which the ad will be presented on.
+    /// - parameter completion: Closure to be performed once the ad has been shown.
+    func show(with viewController: UIViewController, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
+        guard !prebiddingController.isDisabledDueToCOPPA else {
+            let error = error(.showFailure, description: "Showing has been disabled due to COPPA restrictions")
+            log(.loadFailed(error))
+            completion(.failure(error))
+            return
+        }
+        
+        guard let ad = adLoader else {
+            let error = error(.noAdReadyToShow)
+            log(.showFailed(error))
+            showCompletion?(.failure(error))
+            return
+        }
+
+        showCompletion = completion
+        ad.show(from: viewController)
+    }
+}
+
+extension AmazonPublisherServicesAdapterInterstitialAd: DTBAdInterstitialDispatcherDelegate {
+    
+    func interstitialDidLoad(_ interstitial: DTBAdInterstitialDispatcher?) {
+        log(.loadSucceeded)
+        loadCompletion?(.success([:])) ?? log(.loadResultIgnored)
+        loadCompletion = nil
+    }
+
+    func interstitial(_ interstitial: DTBAdInterstitialDispatcher?, didFailToLoadAdWith errorCode: DTBAdErrorCode) {
+        let error = error(.loadFailure, description: "\(errorCode)")
+        log(.loadFailed(error))
+        loadCompletion?(.failure(error)) ?? log(.loadResultIgnored)
+        loadCompletion = nil
+    }
+
+    func interstitialWillPresentScreen(_ interstitial: DTBAdInterstitialDispatcher?) {
+        log("interstitialWillPresentScreen for ad with placement \(request.partnerPlacement)")
+    }
+
+    func interstitialDidPresentScreen(_ interstitial: DTBAdInterstitialDispatcher?) {
+        log(.showSucceeded)
+        showCompletion?(.success([:])) ?? log(.showResultIgnored)
+        showCompletion = nil
+    }
+
+    func interstitialWillDismissScreen(_ interstitial: DTBAdInterstitialDispatcher?) {
+        log("interstitialWillDismissScreen for ad with placement \(request.partnerPlacement)")
+    }
+
+    func interstitialDidDismissScreen(_ interstitial: DTBAdInterstitialDispatcher?) {
+        log(.didDismiss(error: nil))
+        delegate?.didDismiss(self, details: [:], error: nil) ?? log(.delegateUnavailable)
+    }
+
+    func interstitialWillLeaveApplication(_ interstitial: DTBAdInterstitialDispatcher?) {
+        log("interstitialWillLeaveApplication for ad with placement \(request.partnerPlacement)")
+    }
+
+    func show(fromRootViewController controller: UIViewController) {
+        log("showFromRootViewController for ad with placement \(request.partnerPlacement)")
+    }
+    
+    func impressionFired() {
+        log(.didTrackImpression)
+        delegate?.didTrackImpression(self, details: [:]) ?? log(.delegateUnavailable)
+    }
+}
