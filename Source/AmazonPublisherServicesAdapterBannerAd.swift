@@ -76,7 +76,7 @@ extension AmazonPublisherServicesAdapterBannerAd: DTBAdBannerDispatcherDelegate 
     }
 
     func bannerWillLeaveApplication(_ adView: UIView) {
-        log("bannerWillLeaveApplication for ad with placement \(request.partnerPlacement)")
+        log(.delegateCallIgnored)
     }
     
     func impressionFired() {
