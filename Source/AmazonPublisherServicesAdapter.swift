@@ -143,8 +143,8 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     }
 
     /// Indicates if the user is subject to COPPA or not.
-    /// - parameter isSubject: `true` if the user is subject, `false` otherwise.
-    func setUserSubjectToCOPPA(_ isSubject: Bool) {
+    /// - parameter isChildDirected: `true` if the user is subject to COPPA, `false` otherwise.
+    func setCOPPA(isChildDirected: Bool) {
         // Per Amazon APS documentation:
         // The Children’s Online Privacy Protection Act (COPPA) is a United States federal law that is designed to give parents control over the
         // information collected from their young children online. COPPA prohibits the collection, use, or disclosure of personal information from
@@ -159,15 +159,14 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         // Even if your app is directed at a mixed audience, including people both over and under the age of 13, you may not show ads from APS to
         // users you know are under 13. This applies equally even in an app that is not child-directed. For example, if you ask a user for their age and
         // they indicate they are under 13, you may not show an ad to them that you source from the APS integration and/or TAM.
-        prebiddingController.isDisabledDueToCOPPA = isSubject
-        log(.privacyUpdated(setting: "isDisabledDueToCOPPA", value: isSubject))
+        prebiddingController.isDisabledDueToCOPPA = isChildDirected
+        log(.privacyUpdated(setting: "isDisabledDueToCOPPA", value: isChildDirected))
     }
     
     /// Indicates the CCPA status both as a boolean and as an IAB US privacy string.
     /// - parameter hasGivenConsent: A boolean indicating if the user has given consent.
     /// - parameter privacyString: An IAB-compliant string indicating the CCPA status.
-    func setCCPAConsent(hasGivenConsent: Bool, privacyString: String?) {
-        let privacyString = privacyString ?? (hasGivenConsent ? "1YN-" : "1YY-")
+    func setCCPA(hasGivenConsent: Bool, privacyString: String) {
         prebiddingController.ccpaValue = privacyString
         log(.privacyUpdated(setting: "ccpaValue", value: privacyString))
     }
