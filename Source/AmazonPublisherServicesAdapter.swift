@@ -206,5 +206,5 @@ private extension PartnerConfiguration {
 private extension String {
     /// APS keys
     static let appIDKey = "application_id"
-    static let prebidSettingsKey = "prebid_settings"
+    static let prebidSettingsKey = "prebids"
 }
