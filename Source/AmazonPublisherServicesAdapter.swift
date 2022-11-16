@@ -52,7 +52,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         // Extract the prebidding settings and initialize the prebidding controller.
 
         guard let preBidderConfigurations = configuration.preBidderConfigurations, !preBidderConfigurations.isEmpty else {
-            let error = error(.missingSetUpParameter(key: .prebidSettingsKey))
+            let error = error(.missingSetUpParameter(key: .prebidsKey))
             log(.setUpFailed(error))
             return completion(error)
         }
@@ -196,15 +196,15 @@ private extension PartnerConfiguration {
     var appID: String? { credentials[.appIDKey] as? String }
 
     var preBidderConfigurations: [APSPreBidderConfiguration]? {
-        guard let jsonArray = credentials[.prebidSettingsKey] as? [[String: Any]] else {
+        guard let prebids = credentials[.prebidsKey] as? [[String: Any]] else {
             return nil
         }
-        return APSPreBidderConfiguration.makeConfigurations(from: jsonArray)
+        return prebids.compactMap(APSPreBidderConfiguration.makeConfiguration(from:))
     }
 }
 
 private extension String {
     /// APS keys
     static let appIDKey = "application_id"
-    static let prebidSettingsKey = "prebids"
+    static let prebidsKey = "prebids"
 }
