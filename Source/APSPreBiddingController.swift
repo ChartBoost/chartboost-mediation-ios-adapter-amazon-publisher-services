@@ -46,15 +46,10 @@ class APSPreBiddingController {
             // Parse the settings to generate the prebidders.
             // Assumes that there will only ever be a single `CHBHPreBidSettings` per
             // Helium placement identifier.
-            bidders = settings.reduce(into: [:]) { partialResult, prebidSettings in
-                // Extract the inputs required to initialize the prebidder
-                let heliumPlacement: String = prebidSettings.heliumPlacement
-                let amazonSlotUUID: String = prebidSettings.amazonSlotUUID
-                let format = prebidSettings.format
-                let bidderConfiguration = prebidSettings.configuration
-
+            bidders = settings.reduce(into: [:]) { partialResult, bidderConfiguration in
+                
                 // Attempt to create a new bidder for the Helium placement
-                guard let bidder = APSPreBidder(heliumPlacement: heliumPlacement, amazonSlotUUID: amazonSlotUUID, format: format, settings: bidderConfiguration) else {
+                guard let bidder = APSPreBidder(configuration: bidderConfiguration) else {
                     return
                 }
 
@@ -64,7 +59,7 @@ class APSPreBiddingController {
                 }
 
                 // Capture the prebidder
-                partialResult[prebidSettings.heliumPlacement] = bidder
+                partialResult[bidderConfiguration.heliumPlacement] = bidder
             }
         }
     }

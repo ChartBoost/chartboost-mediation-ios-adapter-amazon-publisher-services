@@ -39,10 +39,13 @@ final class AmazonPublisherServicesAdapterInterstitialAd: AmazonPublisherService
 
         loadCompletion = completion
         
-        // Fetch the creative from the mediation hints.
-        let adLoader = DTBAdInterstitialDispatcher(delegate: self)
-        adLoader.fetchAd(withParameters: mediationHints)
-        self.adLoader = adLoader
+        // APS ads make use of UI-related APIs directly from the thread fetchAd() is called, so we need to do it on the main thread
+        DispatchQueue.main.async { [self] in
+            // Fetch the creative from the mediation hints.
+            let adLoader = DTBAdInterstitialDispatcher(delegate: self)
+            adLoader.fetchAd(withParameters: mediationHints)
+            self.adLoader = adLoader
+        }
     }
     
     /// Shows a loaded ad.

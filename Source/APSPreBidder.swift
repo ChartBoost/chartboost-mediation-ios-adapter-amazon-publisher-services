@@ -12,13 +12,7 @@ class APSPreBidder {
     typealias PrebidCallback = (Result<String?, FetchError>) -> Void
 
     // MARK: - State Properties
-    
-    /// Amazon APS slot UUID.
-    let amazonSlotUUID: String
-    
-    /// Helium placement identifier.
-    let heliumPlacement: String
-    
+        
     /// Indicates that a pre-bid load is in progress.
     private(set) var isLoading: Bool = false
     
@@ -39,31 +33,35 @@ class APSPreBidder {
     // MARK: - Initialization
     
     /// Initializes the pre-bidder.
-    init?(heliumPlacement: String, amazonSlotUUID: String, format: APSAdFormat, settings: [String: Any]) {
-        // Capture placement information.
-        self.heliumPlacement = heliumPlacement
-        self.amazonSlotUUID = amazonSlotUUID
-        
-        // Check if this is a video placement.
-        let isVideo: Bool = (settings["video"] as? Bool == true)
-        
+    init?(configuration: APSPreBidderConfiguration) {
         // Generate the Amazon Ad Size object.
-        var adSize: DTBAdSize
-        switch format {
-        case .banner:
-            // Banner format requires the `width` and `height` fields to be defined in `settings`
-            guard let width = settings["width"] as? Int, let height = settings["height"] as? Int else {
-                return nil
-            }
-            
-            adSize = (isVideo ? DTBAdSize(videoAdSizeWithPlayerWidth: width, height: height, andSlotUUID: amazonSlotUUID) : DTBAdSize(bannerAdSizeWithWidth: width, height: height, andSlotUUID: amazonSlotUUID))
-        case .interstitial:
-            adSize = (isVideo ? DTBAdSize(videoAdSizeWithSlotUUID: amazonSlotUUID) : DTBAdSize(interstitialAdSizeWithSlotUUID: amazonSlotUUID))
+        guard let adSize = Self.amazonAdSize(from: configuration) else {
+            return nil
         }
-        
         // Generate the ad loader for the slot.
         loader = DTBAdLoader()
         loader.setAdSizes([adSize])
+    }
+    
+    private static func amazonAdSize(from configuration: APSPreBidderConfiguration) -> DTBAdSize? {
+        switch configuration.type {
+        case .banner:
+            // Banner format requires width and height
+            guard let width = configuration.width, let height = configuration.height else {
+                return nil
+            }
+            if configuration.video == true {
+                return DTBAdSize(videoAdSizeWithPlayerWidth: width, height: height, andSlotUUID: configuration.partnerPlacement)
+            } else {
+                return DTBAdSize(bannerAdSizeWithWidth: width, height: height, andSlotUUID: configuration.partnerPlacement)
+            }
+        case .interstitial:
+            if configuration.video == true {
+                return DTBAdSize(videoAdSizeWithSlotUUID: configuration.partnerPlacement)
+            } else {
+                return DTBAdSize(interstitialAdSizeWithSlotUUID: configuration.partnerPlacement)
+            }
+        }
     }
     
     // MARK: - CCPA
