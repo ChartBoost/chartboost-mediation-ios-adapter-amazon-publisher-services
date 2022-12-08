@@ -24,4 +24,7 @@ Pod::Spec.new do |spec|
 
   # Partner network SDK and version that this adapter is certified to work with.
   spec.dependency 'AmazonPublisherServicesSDK', '4.4.2' 
+
+  # Indicates, that if use_frameworks! is specified, the pod should include a static library framework.
+  spec.static_framework = true
 end
