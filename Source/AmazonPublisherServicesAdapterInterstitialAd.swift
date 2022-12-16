@@ -68,9 +68,7 @@ final class AmazonPublisherServicesAdapterInterstitialAd: AmazonPublisherService
         }
 
         showCompletion = completion
-        DispatchQueue.main.async {
-            ad.show(from: viewController)
-        }
+        ad.show(from: viewController)
     }
 }
 
