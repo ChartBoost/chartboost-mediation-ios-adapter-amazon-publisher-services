@@ -90,7 +90,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         guard !prebiddingController.isDisabledDueToCOPPA else {
             let error = error(.fetchBidderInfoFailure(request), description: "Bidder info fetch has been disabled due to COPPA restrictions")
             log(.fetchBidderInfoFailed(request, error: error))
-            completion([:])
+            completion(nil)
             return
         }
 
@@ -110,7 +110,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
                 let error = self.error(.fetchBidderInfoFailure(request), error: error)
                 self.log(.fetchBidderInfoFailed(request, error: error))
             }
-            completion([:])
+            completion(nil)
         }
     }
     
