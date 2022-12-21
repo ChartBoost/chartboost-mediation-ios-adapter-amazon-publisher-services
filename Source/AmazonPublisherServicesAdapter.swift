@@ -187,6 +187,8 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             throw error(.adFormatNotSupported(request))
         case .banner:
             return AmazonPublisherServicesAdapterBannerAd(adapter: self, request: request, delegate: delegate, prebiddingController: prebiddingController)
+        @unknown default:
+            throw error(.adFormatNotSupported(request))
         }
     }
 }
