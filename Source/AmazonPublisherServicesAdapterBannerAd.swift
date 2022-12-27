@@ -23,7 +23,7 @@ final class AmazonPublisherServicesAdapterBannerAd: AmazonPublisherServicesAdapt
     func load(with viewController: UIViewController?, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
         log(.loadStarted)
         guard !prebiddingController.isDisabledDueToCOPPA else {
-            let error = error(.loadFailure, description: "Loading has been disabled due to COPPA restrictions")
+            let error = error(.loadFailurePrivacyOptIn, description: "Loading has been disabled due to COPPA restrictions")
             log(.loadFailed(error))
             completion(.failure(error))
             return
@@ -31,7 +31,7 @@ final class AmazonPublisherServicesAdapterBannerAd: AmazonPublisherServicesAdapt
         
         // Validate that there is a bid payload available to fetch.
         guard let mediationHints = prebiddingController.bidPayload(heliumPlacementName: request.heliumPlacement) else {
-            let error = error(.noPreBidReadyToLoad)
+            let error = error(.loadFailureAuctionNoBid)
             log(.loadFailed(error))
             completion(.failure(error))
             return
@@ -69,7 +69,7 @@ extension AmazonPublisherServicesAdapterBannerAd: DTBAdBannerDispatcherDelegate 
     }
 
     func adFailed(toLoad banner: UIView?, errorCode: Int) {
-        let error = error(.loadFailure, description: "\(errorCode)")
+        let error = error(.loadFailureException, description: "\(errorCode)")
         log(.loadFailed(error))
         loadCompletion?(.failure(error)) ?? log(.loadResultIgnored)
         loadCompletion = nil

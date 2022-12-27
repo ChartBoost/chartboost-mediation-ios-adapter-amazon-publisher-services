@@ -44,7 +44,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         log(.setUpStarted)
         
         guard let appID = configuration.appID, !appID.isEmpty else {
-            let error = error(.missingSetUpParameter(key: .appIDKey))
+            let error = error(.initializationFailureInvalidCredentials, description: "Missing \(String.appIDKey)")
             log(.setUpFailed(error))
             return completion(error)
         }
@@ -52,7 +52,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         // Extract the prebidding settings and initialize the prebidding controller.
 
         guard let preBidderConfigurations = configuration.preBidderConfigurations, !preBidderConfigurations.isEmpty else {
-            let error = error(.missingSetUpParameter(key: .prebidsKey))
+            let error = error(.initializationFailureInvalidCredentials, description: "Missing \(String.prebidsKey)")
             log(.setUpFailed(error))
             return completion(error)
         }
@@ -73,7 +73,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
                 completion(nil)
             }
             else {
-                let error = error(.setUpFailure, description: "Failed to be ready within the expected timeframe of 250ms")
+                let error = error(.initializationFailureTimeout, description: "Failed to be ready within the expected timeframe of 250ms")
                 log(.setUpFailed(error))
                 completion(error)
             }
@@ -88,7 +88,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         log(.fetchBidderInfoStarted(request))
 
         guard !prebiddingController.isDisabledDueToCOPPA else {
-            let error = error(.fetchBidderInfoFailure(request), description: "Bidder info fetch has been disabled due to COPPA restrictions")
+            let error = error(.prebidFailureUnknown, description: "Bidder info fetch has been disabled due to COPPA restrictions")
             log(.fetchBidderInfoFailed(request, error: error))
             completion(nil)
             return
@@ -103,11 +103,11 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
                     return completion([request.heliumPlacement: pricePoint])
                 }
                 else {
-                    let error = self.error(.fetchBidderInfoFailure(request), description: "Price point value not supplied")
+                    let error = self.error(.prebidFailurePartnerNotIntegrated, description: "Price point value not supplied")
                     self.log(.fetchBidderInfoFailed(request, error: error))
                 }
             case .failure(let error):
-                let error = self.error(.fetchBidderInfoFailure(request), error: error)
+                let error = self.error(.prebidFailurePartnerNotIntegrated, error: error)
                 self.log(.fetchBidderInfoFailed(request, error: error))
             }
             completion(nil)
@@ -184,11 +184,11 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         case .interstitial:
             return AmazonPublisherServicesAdapterInterstitialAd(adapter: self, request: request, delegate: delegate, prebiddingController: prebiddingController)
         case .rewarded:
-            throw error(.adFormatNotSupported(request))
+            throw error(.loadFailureUnsupportedAdFormat)
         case .banner:
             return AmazonPublisherServicesAdapterBannerAd(adapter: self, request: request, delegate: delegate, prebiddingController: prebiddingController)
         @unknown default:
-            throw error(.adFormatNotSupported(request))
+            throw error(.loadFailureUnsupportedAdFormat)
         }
     }
 }
