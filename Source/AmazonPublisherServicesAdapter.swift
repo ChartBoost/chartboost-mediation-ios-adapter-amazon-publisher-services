@@ -103,11 +103,11 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
                     return completion([request.heliumPlacement: pricePoint])
                 }
                 else {
-                    let error = self.error(.prebidFailurePartnerNotIntegrated, description: "Price point value not supplied")
+                    let error = self.error(.prebidFailureInvalidArgument, description: "Price point value not supplied")
                     self.log(.fetchBidderInfoFailed(request, error: error))
                 }
             case .failure(let error):
-                let error = self.error(.prebidFailurePartnerNotIntegrated, error: error)
+                let error = self.error(.prebidFailureUnknown, error: error)
                 self.log(.fetchBidderInfoFailed(request, error: error))
             }
             completion(nil)
