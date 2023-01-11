@@ -69,7 +69,7 @@ extension AmazonPublisherServicesAdapterBannerAd: DTBAdBannerDispatcherDelegate 
     }
 
     func adFailed(toLoad banner: UIView?, errorCode: Int) {
-        let error = error(.loadFailureUnknown, description: "\(errorCode)")
+        let error = partnerError(errorCode)
         log(.loadFailed(error))
         loadCompletion?(.failure(error)) ?? log(.loadResultIgnored)
         loadCompletion = nil
