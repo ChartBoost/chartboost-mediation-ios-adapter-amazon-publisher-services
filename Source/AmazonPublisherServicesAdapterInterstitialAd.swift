@@ -81,7 +81,7 @@ extension AmazonPublisherServicesAdapterInterstitialAd: DTBAdInterstitialDispatc
     }
 
     func interstitial(_ interstitial: DTBAdInterstitialDispatcher?, didFailToLoadAdWith errorCode: DTBAdErrorCode) {
-        let error = error(.loadFailureUnknown, description: "\(errorCode)")
+        let error = partnerError(errorCode.rawValue)
         log(.loadFailed(error))
         loadCompletion?(.failure(error)) ?? log(.loadResultIgnored)
         loadCompletion = nil
