@@ -107,7 +107,8 @@ extension AmazonPublisherServicesAdapterInterstitialAd: DTBAdInterstitialDispatc
     }
 
     func interstitialWillLeaveApplication(_ interstitial: DTBAdInterstitialDispatcher?) {
-        log(.delegateCallIgnored)
+        log(.didClick(error: nil))
+        delegate?.didClick(self, details: [:]) ?? log(.delegateUnavailable)
     }
 
     func show(fromRootViewController controller: UIViewController) {
