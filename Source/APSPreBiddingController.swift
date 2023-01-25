@@ -8,8 +8,8 @@
 //  ChartboostHeliumAdapterAmazonPublisherServices
 //
 
+import ChartboostMediationSDK
 import Foundation
-import HeliumSdk
 
 /// Managers all the `APSPreBidder` objects.
 class APSPreBiddingController {
