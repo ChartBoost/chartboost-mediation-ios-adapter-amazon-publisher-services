@@ -1,6 +1,6 @@
 # Chartboost Mediation Amazon Publisher Services Adapter
 
-The Chartboost Mediation Amazon Publisher Services adapter mediates the Amazon Publisher Services SDK into the Chartboost Mediation SDK.
+The Chartboost Mediation Amazon Publisher Services adapter mediates Amazon Publisher Services via the Chartboost Mediation SDK.
 
 ## Minimum Requirements
 
