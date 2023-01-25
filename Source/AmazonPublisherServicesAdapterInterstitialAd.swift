@@ -8,9 +8,9 @@
 //  ChartboostHeliumAdapterAmazonPublisherServices
 //
 
-import Foundation
-import HeliumSdk
+import ChartboostMediationSDK
 import DTBiOSSDK
+import Foundation
 
 /// The Helium Amazon Publisher Services adapter interstitial ad.
 final class AmazonPublisherServicesAdapterInterstitialAd: AmazonPublisherServicesAdapterAd, PartnerAd {

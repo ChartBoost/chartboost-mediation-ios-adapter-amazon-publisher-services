@@ -8,9 +8,9 @@
 //  ChartboostHeliumAdapterAmazonPublisherServices
 //
 
-import Foundation
-import HeliumSdk
+import ChartboostMediationSDK
 import DTBiOSSDK
+import Foundation
 import UIKit
 
 /// The Helium Amazon Publisher Services adapter.
