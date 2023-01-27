@@ -5,7 +5,7 @@
 
 //
 //  APSPreBiddingController.swift
-//  ChartboostHeliumAdapterAmazonPublisherServices
+//  ChartboostMediationAdapterAmazonPublisherServices
 //
 
 import ChartboostMediationSDK
@@ -14,7 +14,7 @@ import Foundation
 /// Managers all the `APSPreBidder` objects.
 class APSPreBiddingController {
 
-    private let queue = DispatchQueue(label: "com.chartboost.Helium.APSPreBiddingController.queue")
+    private let queue = DispatchQueue(label: "com.chartboost.mediation.APSPreBiddingController.queue")
 
     // MARK: - CCPA / COPPA
     
@@ -39,21 +39,21 @@ class APSPreBiddingController {
     
     // MARK: - Internal State
     
-    /// Current set of bidders. Map of `[Helium Placement Identifier: APSPreBidder]`
+    /// Current set of bidders. Map of `[Chartboost Mediation Placement Identifier: APSPreBidder]`
     private var bidders: [String: APSPreBidder] = [:]
     
     // MARK: - Setup
     
     /// Sets up all the prebidder instances.
-    /// - Parameter settings: Prebidding settings from the Helium SDK.
+    /// - Parameter settings: Prebidding settings from the Chartboost Mediation SDK.
     func setup(settings: [APSPreBidderConfiguration]) {
         queue.sync {
             // Parse the settings to generate the prebidders.
             // Assumes that there will only ever be a single `CHBHPreBidSettings` per
-            // Helium placement identifier.
+            // Chartboost Mediation placement identifier.
             bidders = settings.reduce(into: [:]) { partialResult, bidderConfiguration in
                 
-                // Attempt to create a new bidder for the Helium placement
+                // Attempt to create a new bidder for the Chartboost Mediation placement
                 guard let bidder = APSPreBidder(configuration: bidderConfiguration) else {
                     return
                 }
@@ -72,12 +72,12 @@ class APSPreBiddingController {
     // MARK: - Prebidding
     
     /// Fetches the prebidding token used for RTB auctions.
-    /// - Parameter heliumPlacementName: Helium placement name.
+    /// - Parameter chartboostMediationPlacementName: Chartboost Mediation placement name.
     /// - Parameter completion: Closure invoked when the token fetch completes.
-    func fetchPrebiddingToken(heliumPlacementName: String, completion: @escaping APSPreBidder.PrebidCallback) {
+    func fetchPrebiddingToken(chartboostMediationPlacementName: String, completion: @escaping APSPreBidder.PrebidCallback) {
         // Get the prebidder for the placement.
         guard let prebidder = queue.sync(execute: {
-            bidders[heliumPlacementName]
+            bidders[chartboostMediationPlacementName]
         }) else {
             return completion(.failure(.prebidderInstanceNotFound))
         }
@@ -86,15 +86,15 @@ class APSPreBiddingController {
     }
     
     /// Retrieves the bid payload from a previously fetched token.
-    /// - Parameter heliumPlacementName: Helium placement name.
-    /// - Returns: Amazon mediation hints (bid payload) associated with the Helium placement name if present; otherwise `nil`.
-    func bidPayload(heliumPlacementName: String) -> [AnyHashable: Any]? {
+    /// - Parameter chartboostMediationPlacementName: Chartboost Mediation placement name.
+    /// - Returns: Amazon mediation hints (bid payload) associated with the Chartboost Mediation placement name if present; otherwise `nil`.
+    func bidPayload(chartboostMediationPlacementName: String) -> [AnyHashable: Any]? {
         // Disallow pre-bidding due to COPPA restrictions.
         guard isDisabledDueToCOPPA == false else { return nil }
         
         // Get the prebidder for the placement.
         guard let prebidder = queue.sync(execute: {
-            bidders[heliumPlacementName]
+            bidders[chartboostMediationPlacementName]
         }) else {
             return nil
         }

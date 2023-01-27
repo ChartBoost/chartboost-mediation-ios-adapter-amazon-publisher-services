@@ -5,7 +5,7 @@
 
 //
 //  APSPreBidderConfiguration.swift
-//  ChartboostHeliumAdapterAmazonPublisherServices
+//  ChartboostMediationAdapterAmazonPublisherServices
 //
 //
 
@@ -19,10 +19,10 @@ struct APSPreBidderConfiguration: Codable {
         case banner
     }
     
-    /// Helium placement name.
+    /// Chartboost Mediation placement name.
     let heliumPlacement: String
     
-    /// Amazon slot UUID associated with the Helium placement name.
+    /// Amazon slot UUID associated with the Chartboost Mediation placement name.
     let partnerPlacement: String
         
     /// Ad format associated with the Amazon slot UUID.

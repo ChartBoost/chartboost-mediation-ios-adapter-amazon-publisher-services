@@ -5,7 +5,7 @@
 
 //
 //  AmazonPublisherServicesAdAdapter.swift
-//  ChartboostHeliumAdapterAmazonPublisherServices
+//  ChartboostMediationAdapterAmazonPublisherServices
 //
 
 import ChartboostMediationSDK
@@ -13,7 +13,7 @@ import DTBiOSSDK
 import Foundation
 import UIKit
 
-/// Base class for Helium Amazon Publisher Services adapter ads.
+/// Base class for Chartboost Mediation Amazon Publisher Services adapter ads.
 class AmazonPublisherServicesAdapterAd: NSObject {
     
     /// The partner adapter that created this ad.
@@ -30,17 +30,17 @@ class AmazonPublisherServicesAdapterAd: NSObject {
     /// Instance of the prebidding controller.
     let prebiddingController: APSPreBiddingController
         
-    /// The completion handler to notify Helium of ad show completion result.
+    /// The completion handler to notify Chartboost Mediation of ad show completion result.
     var loadCompletion: ((Result<PartnerEventDetails, Error>) -> Void)?
 
-    /// The completion handler to notify Helium of ad load completion result.
+    /// The completion handler to notify Chartboost Mediation of ad load completion result.
     var showCompletion: ((Result<PartnerEventDetails, Error>) -> Void)?
 
     /// Create a new instance of the adapter.
     /// - Parameters:
     ///   - adapter: The current adapter instance
     ///   - request: The current AdLoadRequest containing data relevant to the curent ad request
-    ///   - partnerAdDelegate: The partner ad delegate to notify Helium of ad lifecycle events.
+    ///   - partnerAdDelegate: The partner ad delegate to notify Chartboost Mediation of ad lifecycle events.
     init(adapter: PartnerAdapter, request: PartnerAdLoadRequest, delegate: PartnerAdDelegate, prebiddingController: APSPreBiddingController) {
         self.adapter = adapter
         self.request = request

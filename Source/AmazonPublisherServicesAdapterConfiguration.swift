@@ -5,7 +5,7 @@
 
 //
 //  AmazonPublisherServicesAdapterConfiguration.swift
-//  ChartboostHeliumAdapterAmazonPublisherServices
+//  ChartboostMediationAdapterAmazonPublisherServices
 //
 
 import DTBiOSSDK

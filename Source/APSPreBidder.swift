@@ -5,7 +5,7 @@
 
 //
 //  APSPreBidder.swift
-//  ChartboostHeliumAdapterAmazonPublisherServices
+//  ChartboostMediationAdapterAmazonPublisherServices
 //
 
 import DTBiOSSDK
@@ -29,7 +29,7 @@ class APSPreBidder {
     
     // MARK: - Caches
     
-    /// Current pre-bid used to inform the Helium ad server where APS should be slotted into the auction.
+    /// Current pre-bid used to inform the Chartboost Mediation ad server where APS should be slotted into the auction.
     private(set) var amazonPricePoint: String? = nil
     
     /// Current cached Amazon APS mediation hints that are associated with `amazonPricePoint`.
