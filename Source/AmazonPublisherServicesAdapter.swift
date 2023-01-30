@@ -34,7 +34,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     static var amazon: DTBAds { DTBAds.sharedInstance() }
 
     /// Instance of the prebidding controller.
-    private let prebiddingController = APSPreBiddingController()
+    private lazy var prebiddingController = APSPreBiddingController(adapter: self)
     
     /// The designated initializer for the adapter.
     /// Helium SDK will use this constructor to create instances of conforming types.
@@ -105,17 +105,16 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             case .success(let pricePoint):
                 if let pricePoint = pricePoint {
                     self.log(.fetchBidderInfoSucceeded(request))
-                    return completion([request.heliumPlacement: pricePoint])
-                }
-                else {
+                    completion([request.heliumPlacement: pricePoint])
+                } else {
                     let error = self.error(.prebidFailureInvalidArgument, description: "Price point value not supplied")
                     self.log(.fetchBidderInfoFailed(request, error: error))
+                    completion(nil)
                 }
             case .failure(let error):
-                let error = self.error(.prebidFailureUnknown, error: error)
                 self.log(.fetchBidderInfoFailed(request, error: error))
+                completion(nil)
             }
-            completion(nil)
         }
     }
     
