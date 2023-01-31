@@ -8,8 +8,8 @@
 //  ChartboostHeliumAdapterAmazonPublisherServices
 //
 
-import DTBiOSSDK
 import ChartboostMediationSDK
+import DTBiOSSDK
 import Foundation
 
 /// Pre-bidder for a single placement.

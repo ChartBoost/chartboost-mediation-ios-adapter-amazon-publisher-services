@@ -205,11 +205,16 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     func mapPrebidError(_ error: Error) -> HeliumError.Code? {
         let code = DTBAdError(UInt32((error as NSError).code))
         switch code {
-        case NETWORK_ERROR: return .prebidFailureNetworkingError
-        case NETWORK_TIMEOUT: return .prebidFailureTimeout
-        case NO_FILL: return .prebidFailureNoFill
-        case INTERNAL_ERROR: return .prebidFailureUnknown
-        case REQUEST_ERROR: return .prebidFailureInvalidArgument
+        case NETWORK_ERROR:
+            return .prebidFailureNetworkingError
+        case NETWORK_TIMEOUT:
+            return .prebidFailureTimeout
+        case NO_FILL:
+            return .prebidFailureNoFill
+        case INTERNAL_ERROR:
+            return .prebidFailureUnknown
+        case REQUEST_ERROR:
+            return .prebidFailureInvalidArgument
         default:
             return nil
         }
