@@ -5,7 +5,7 @@
 
 //
 //  AmazonPublisherServicesAdapter.swift
-//  ChartboostHeliumAdapterAmazonPublisherServices
+//  ChartboostMediationAdapterAmazonPublisherServices
 //
 
 import ChartboostMediationSDK
@@ -13,15 +13,15 @@ import DTBiOSSDK
 import Foundation
 import UIKit
 
-/// The Helium Amazon Publisher Services adapter.
+/// The Chartboost Mediation Amazon Publisher Services adapter.
 final class AmazonPublisherServicesAdapter: PartnerAdapter {
     
     /// The version of the partner SDK.
     let partnerSDKVersion: String = DTBAds.version()
     
     /// The version of the adapter.
-    /// It should have either 5 or 6 digits separated by periods, where the first digit is Helium SDK's major version, the last digit is the adapter's build version, and intermediate digits are the partner SDK's version.
-    /// Format: `<Helium major version>.<Partner major version>.<Partner minor version>.<Partner patch version>.<Partner build version>.<Adapter build version>` where `.<Partner build version>` is optional.
+    /// It should have either 5 or 6 digits separated by periods, where the first digit is Chartboost Mediation SDK's major version, the last digit is the adapter's build version, and intermediate digits are the partner SDK's version.
+    /// Format: `<Chartboost Mediation major version>.<Partner major version>.<Partner minor version>.<Partner patch version>.<Partner build version>.<Adapter build version>` where `.<Partner build version>` is optional.
     let adapterVersion = "4.4.5.6.0"
     
     /// The partner's unique identifier.
@@ -37,8 +37,8 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     private lazy var prebiddingController = APSPreBiddingController(adapter: self)
     
     /// The designated initializer for the adapter.
-    /// Helium SDK will use this constructor to create instances of conforming types.
-    /// - parameter storage: An object that exposes storage managed by the Helium SDK to the adapter.
+    /// Chartboost Mediation SDK will use this constructor to create instances of conforming types.
+    /// - parameter storage: An object that exposes storage managed by the Chartboost Mediation SDK to the adapter.
     /// It includes a list of created `PartnerAd` instances. You may ignore this parameter if you don't need it.
     init(storage: PartnerAdapterStorage) {}
     
@@ -99,7 +99,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             return
         }
 
-        prebiddingController.fetchPrebiddingToken(heliumPlacementName: request.heliumPlacement) { [weak self] result in
+        prebiddingController.fetchPrebiddingToken(chartboostMediationPlacementName: request.heliumPlacement) { [weak self] result in
             guard let self = self else { return }
             switch result {
             case .success(let pricePoint):
@@ -133,7 +133,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         // - IABTCF_gdprApplies – 0 if GDPR does not apply for the user or 1 if GDPR does apply for the user
         // - IABTCF_TCString – encoded consent string value
         //
-        // Since the Helium SDK does not support the TCFv2 CMP framework, we will be using
+        // Since the Chartboost Mediation SDK does not support the TCFv2 CMP framework, we will be using
         // the MoPub CMP flavor which is a manually specified consent mechanism.
         //
         // The CMP flavor is set again in the event that `setGDPRConsentStatus()` is
@@ -177,8 +177,8 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     }
     
     /// Creates a new ad object in charge of communicating with a single partner SDK ad instance.
-    /// Helium SDK calls this method to create a new ad for each new load request. Ad instances are never reused.
-    /// Helium SDK takes care of storing and disposing of ad instances so you don't need to.
+    /// Chartboost Mediation SDK calls this method to create a new ad for each new load request. Ad instances are never reused.
+    /// Chartboost Mediation SDK takes care of storing and disposing of ad instances so you don't need to.
     /// `invalidate()` is called on ads before disposing of them in case partners need to perform any custom logic before the object gets destroyed.
     /// If, for some reason, a new ad cannot be provided, an error should be thrown.
     /// - parameter request: Information about the ad load request.

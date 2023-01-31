@@ -5,14 +5,14 @@
 
 //
 //  AmazonPublisherServicesAdapterBannerAd.swift
-//  ChartboostHeliumAdapterAmazonPublisherServices
+//  ChartboostMediationAdapterAmazonPublisherServices
 //
 
 import ChartboostMediationSDK
 import DTBiOSSDK
 import Foundation
 
-/// The Helium Amazon Publisher Services adapter banner ad.
+/// The Chartboost Mediation Amazon Publisher Services adapter banner ad.
 final class AmazonPublisherServicesAdapterBannerAd: AmazonPublisherServicesAdapterAd, PartnerAd {
     
     /// The partner ad view to display inline. E.g. a banner view.
@@ -35,7 +35,7 @@ final class AmazonPublisherServicesAdapterBannerAd: AmazonPublisherServicesAdapt
         }
         
         // Validate that there is a bid payload available to fetch.
-        guard let mediationHints = prebiddingController.bidPayload(heliumPlacementName: request.heliumPlacement) else {
+        guard let mediationHints = prebiddingController.bidPayload(chartboostMediationPlacementName: request.heliumPlacement) else {
             let error = error(.loadFailureAuctionNoBid)
             log(.loadFailed(error))
             completion(.failure(error))
