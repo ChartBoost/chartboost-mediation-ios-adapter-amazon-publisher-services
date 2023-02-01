@@ -89,7 +89,7 @@ class APSPreBidder {
     func fetchPrebiddingToken(completion: @escaping PrebidCallback) {
         // There is already a load in progress.
         guard isLoading == false else {
-            return completion(.failure(adapter.error(.prebidFailureLoadInProgress)))
+            return completion(.failure(adapter.error(.prebidFailureUnknown, description: "Load already in progress")))
         }
         
         // Start the prebidding process

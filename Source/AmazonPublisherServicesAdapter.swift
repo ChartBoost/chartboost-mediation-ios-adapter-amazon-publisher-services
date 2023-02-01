@@ -210,7 +210,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         case NETWORK_TIMEOUT:
             return .prebidFailureTimeout
         case NO_FILL:
-            return .prebidFailureNoFill
+            return .prebidFailureUnknown
         case INTERNAL_ERROR:
             return .prebidFailureUnknown
         case REQUEST_ERROR:
