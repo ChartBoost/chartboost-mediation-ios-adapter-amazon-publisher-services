@@ -10,7 +10,14 @@ import Foundation
 class APSPreBiddingController {
 
     private let queue = DispatchQueue(label: "com.chartboost.mediation.APSPreBiddingController.queue")
-
+    
+    /// The partner adapter instance.
+    private var adapter: PartnerAdapter
+    
+    init(adapter: PartnerAdapter) {
+        self.adapter = adapter
+    }
+    
     // MARK: - CCPA / COPPA
     
     /// The CCPA value to use for all `APSPreBidder` instances.
@@ -49,7 +56,7 @@ class APSPreBiddingController {
             bidders = settings.reduce(into: [:]) { partialResult, bidderConfiguration in
                 
                 // Attempt to create a new bidder for the Chartboost Mediation placement
-                guard let bidder = APSPreBidder(configuration: bidderConfiguration) else {
+                guard let bidder = APSPreBidder(configuration: bidderConfiguration, adapter: adapter) else {
                     return
                 }
 
@@ -74,7 +81,7 @@ class APSPreBiddingController {
         guard let prebidder = queue.sync(execute: {
             bidders[chartboostMediationPlacementName]
         }) else {
-            return completion(.failure(.prebidderInstanceNotFound))
+            return completion(.failure(adapter.error(.prebidFailureAdapterNotFound, description: "Adapter prebidder instance not found")))
         }
 
         prebidder.fetchPrebiddingToken(completion: completion)

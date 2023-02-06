@@ -3,13 +3,14 @@
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
+import ChartboostMediationSDK
 import DTBiOSSDK
 import Foundation
 
 /// Pre-bidder for a single placement.
 /// This class is responsible for pre-bidding and caching of responses and creatives.
 class APSPreBidder {
-    typealias PrebidCallback = (Result<String?, FetchError>) -> Void
+    typealias PrebidCallback = (Result<String?, Error>) -> Void
 
     // MARK: - State Properties
         
@@ -22,6 +23,9 @@ class APSPreBidder {
     /// Prebid callback.
     private var prebidCallback: PrebidCallback? = nil
     
+    /// The partner adapter instance.
+    private var adapter: PartnerAdapter
+    
     // MARK: - Caches
     
     /// Current pre-bid used to inform the Chartboost Mediation ad server where APS should be slotted into the auction.
@@ -33,11 +37,12 @@ class APSPreBidder {
     // MARK: - Initialization
     
     /// Initializes the pre-bidder.
-    init?(configuration: APSPreBidderConfiguration) {
+    init?(configuration: APSPreBidderConfiguration, adapter: PartnerAdapter) {
         // Generate the Amazon Ad Size object.
         guard let adSize = Self.amazonAdSize(from: configuration) else {
             return nil
         }
+        self.adapter = adapter
         // Generate the ad loader for the slot.
         loader = DTBAdLoader()
         loader.setAdSizes([adSize])
@@ -79,7 +84,7 @@ class APSPreBidder {
     func fetchPrebiddingToken(completion: @escaping PrebidCallback) {
         // There is already a load in progress.
         guard isLoading == false else {
-            return completion(.failure(.loadAlreadyInProgress))
+            return completion(.failure(adapter.error(.prebidFailureUnknown, description: "Load already in progress")))
         }
         
         // Start the prebidding process
@@ -115,42 +120,6 @@ class APSPreBidder {
     }
 }
 
-extension APSPreBidder {
-    /// PreBidder error
-    enum FetchError: Error, LocalizedError {
-        case unexpectedFailure
-        case prebidderInstanceNotFound
-        case loadAlreadyInProgress
-
-        case networkError
-        case networkTimeout
-        case noFill
-        case internalError
-        case requestError
-
-        var errorDescription: String? {
-            switch self {
-            case .unexpectedFailure:
-                return "unexpected failure"
-            case .prebidderInstanceNotFound:
-                return "prebidder instance not found"
-            case .loadAlreadyInProgress:
-                return "load already in progress"
-            case .networkError:
-                return "network error"
-            case .networkTimeout:
-                return "network timeout"
-            case .noFill:
-                return "no fill"
-            case .internalError:
-                return "internal error"
-            case .requestError:
-                return "request error"
-            }
-        }
-    }
-}
-
 extension APSPreBidder: DTBAdCallback {
     // MARK: - DTBAdCallback
     
@@ -159,7 +128,7 @@ extension APSPreBidder: DTBAdCallback {
         amazonPricePoint = nil
         amazonMediationHints = nil
         isLoading = false
-        prebidCallback?(.failure(error.asFetchError))
+        prebidCallback?(.failure(adapter.partnerError(Int(error.rawValue))))
         prebidCallback = nil
     }
     
@@ -177,18 +146,5 @@ extension APSPreBidder: DTBAdCallback {
 
         prebidCallback?(.success(amazonPricePoint))
         prebidCallback = nil
-    }
-}
-
-extension DTBAdError {
-    var asFetchError: APSPreBidder.FetchError {
-        switch self {
-        case NETWORK_ERROR: return .networkError
-        case NETWORK_TIMEOUT: return .networkTimeout
-        case NO_FILL: return .noFill
-        case INTERNAL_ERROR: return .internalError
-        case REQUEST_ERROR: return .requestError
-        default: return .unexpectedFailure
-        }
     }
 }

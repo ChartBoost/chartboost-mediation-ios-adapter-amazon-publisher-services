@@ -29,7 +29,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     static var amazon: DTBAds { DTBAds.sharedInstance() }
 
     /// Instance of the prebidding controller.
-    private let prebiddingController = APSPreBiddingController()
+    private lazy var prebiddingController = APSPreBiddingController(adapter: self)
     
     /// The designated initializer for the adapter.
     /// Chartboost Mediation SDK will use this constructor to create instances of conforming types.
@@ -100,17 +100,16 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             case .success(let pricePoint):
                 if let pricePoint = pricePoint {
                     self.log(.fetchBidderInfoSucceeded(request))
-                    return completion([request.heliumPlacement: pricePoint])
-                }
-                else {
+                    completion([request.heliumPlacement: pricePoint])
+                } else {
                     let error = self.error(.prebidFailureInvalidArgument, description: "Price point value not supplied")
                     self.log(.fetchBidderInfoFailed(request, error: error))
+                    completion(nil)
                 }
             case .failure(let error):
-                let error = self.error(.prebidFailureUnknown, error: error)
                 self.log(.fetchBidderInfoFailed(request, error: error))
+                completion(nil)
             }
-            completion(nil)
         }
     }
     
@@ -189,6 +188,54 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             return AmazonPublisherServicesAdapterBannerAd(adapter: self, request: request, delegate: delegate, prebiddingController: prebiddingController)
         @unknown default:
             throw error(.loadFailureUnsupportedAdFormat)
+        }
+    }
+    
+    /// Maps a partner prebid error to a Helium error code.
+    /// Helium SDK calls this method when a fetch bidder info completion is called with a partner error.
+    ///
+    /// A default implementation is provided that returns `nil`.
+    /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Helium's.
+    /// If some case cannot be mapped return `nil` to let Helium choose a default error code.
+    func mapPrebidError(_ error: Error) -> HeliumError.Code? {
+        let code = DTBAdError(UInt32((error as NSError).code))
+        switch code {
+        case NETWORK_ERROR:
+            return .prebidFailureNetworkingError
+        case NETWORK_TIMEOUT:
+            return .prebidFailureTimeout
+        case NO_FILL:
+            return .prebidFailureUnknown
+        case INTERNAL_ERROR:
+            return .prebidFailureUnknown
+        case REQUEST_ERROR:
+            return .prebidFailureInvalidArgument
+        default:
+            return nil
+        }
+    }
+    
+    /// Maps a partner load error to a Helium error code.
+    /// Helium SDK calls this method when a load completion is called with a partner error.
+    ///
+    /// A default implementation is provided that returns `nil`.
+    /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Helium's.
+    /// If some case cannot be mapped return `nil` to let Helium choose a default error code.
+    func mapLoadError(_ error: Error) -> HeliumError.Code? {
+        guard let code = DTBAdErrorCode(rawValue: (error as NSError).code) else {
+            return nil
+        }
+        switch code {
+        case .SampleErrorCodeBadRequest:
+            return .loadFailureInvalidAdRequest
+        case .SampleErrorCodeUnknown:
+            return .loadFailureUnknown
+        case .SampleErrorCodeNetworkError:
+            return .loadFailureNetworkingError
+        case .SampleErrorCodeNoInventory:
+            return .loadFailureNoFill
+        @unknown default:
+            return nil
         }
     }
 }
