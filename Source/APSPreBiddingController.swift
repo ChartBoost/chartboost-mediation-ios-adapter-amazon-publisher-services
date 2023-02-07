@@ -66,7 +66,7 @@ class APSPreBiddingController {
                 }
 
                 // Capture the prebidder
-                partialResult[bidderConfiguration.heliumPlacement] = bidder
+                partialResult[bidderConfiguration.chartboostPlacement] = bidder
             }
         }
     }

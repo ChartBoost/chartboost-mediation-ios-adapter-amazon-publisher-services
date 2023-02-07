@@ -14,7 +14,7 @@ struct APSPreBidderConfiguration: Codable {
     }
     
     /// Chartboost Mediation placement name.
-    let heliumPlacement: String
+    let chartboostPlacement: String
     
     /// Amazon slot UUID associated with the Chartboost Mediation placement name.
     let partnerPlacement: String
