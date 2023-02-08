@@ -30,7 +30,7 @@ final class AmazonPublisherServicesAdapterBannerAd: AmazonPublisherServicesAdapt
         }
         
         // Validate that there is a bid payload available to fetch.
-        guard let mediationHints = prebiddingController.bidPayload(chartboostMediationPlacementName: request.heliumPlacement) else {
+        guard let mediationHints = prebiddingController.bidPayload(chartboostMediationPlacementName: request.chartboostPlacement) else {
             let error = error(.loadFailureAuctionNoBid)
             log(.loadFailed(error))
             completion(.failure(error))

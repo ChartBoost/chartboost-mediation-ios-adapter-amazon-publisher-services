@@ -94,13 +94,13 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             return
         }
 
-        prebiddingController.fetchPrebiddingToken(chartboostMediationPlacementName: request.heliumPlacement) { [weak self] result in
+        prebiddingController.fetchPrebiddingToken(chartboostMediationPlacementName: request.chartboostPlacement) { [weak self] result in
             guard let self = self else { return }
             switch result {
             case .success(let pricePoint):
                 if let pricePoint = pricePoint {
                     self.log(.fetchBidderInfoSucceeded(request))
-                    completion([request.heliumPlacement: pricePoint])
+                    completion([request.chartboostPlacement: pricePoint])
                 } else {
                     let error = self.error(.prebidFailureInvalidArgument, description: "Price point value not supplied")
                     self.log(.fetchBidderInfoFailed(request, error: error))
