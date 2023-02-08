@@ -197,7 +197,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// A default implementation is provided that returns `nil`.
     /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Helium's.
     /// If some case cannot be mapped return `nil` to let Helium choose a default error code.
-    func mapPrebidError(_ error: Error) -> HeliumError.Code? {
+    func mapPrebidError(_ error: Error) -> ChartboostMediationError.Code? {
         let code = DTBAdError(UInt32((error as NSError).code))
         switch code {
         case NETWORK_ERROR:
@@ -221,7 +221,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// A default implementation is provided that returns `nil`.
     /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Helium's.
     /// If some case cannot be mapped return `nil` to let Helium choose a default error code.
-    func mapLoadError(_ error: Error) -> HeliumError.Code? {
+    func mapLoadError(_ error: Error) -> ChartboostMediationError.Code? {
         guard let code = DTBAdErrorCode(rawValue: (error as NSError).code) else {
             return nil
         }
