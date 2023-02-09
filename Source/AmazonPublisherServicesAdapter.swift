@@ -191,12 +191,12 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         }
     }
     
-    /// Maps a partner prebid error to a Helium error code.
-    /// Helium SDK calls this method when a fetch bidder info completion is called with a partner error.
+    /// Maps a partner prebid error to a Chartboost Mediation error code.
+    /// Chartboost Mediation SDK calls this method when a fetch bidder info completion is called with a partner error.
     ///
     /// A default implementation is provided that returns `nil`.
-    /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Helium's.
-    /// If some case cannot be mapped return `nil` to let Helium choose a default error code.
+    /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Chartboost Mediation's.
+    /// If some case cannot be mapped return `nil` to let Chartboost Mediation choose a default error code.
     func mapPrebidError(_ error: Error) -> ChartboostMediationError.Code? {
         let code = DTBAdError(UInt32((error as NSError).code))
         switch code {
@@ -215,12 +215,12 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         }
     }
     
-    /// Maps a partner load error to a Helium error code.
-    /// Helium SDK calls this method when a load completion is called with a partner error.
+    /// Maps a partner load error to a Chartboost Mediation error code.
+    /// Chartboost Mediation SDK calls this method when a load completion is called with a partner error.
     ///
     /// A default implementation is provided that returns `nil`.
-    /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Helium's.
-    /// If some case cannot be mapped return `nil` to let Helium choose a default error code.
+    /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Chartboost Mediation's.
+    /// If some case cannot be mapped return `nil` to let Chartboost Mediation choose a default error code.
     func mapLoadError(_ error: Error) -> ChartboostMediationError.Code? {
         guard let code = DTBAdErrorCode(rawValue: (error as NSError).code) else {
             return nil
