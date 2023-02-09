@@ -137,7 +137,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         log(.privacyUpdated(setting: "cmpFlavor", value: DTBCMPFlavor.MOPUB_CMP.rawValue))
 
         // Translate the explicit consent into the Amazon equivalent.
-        let consentStatus: DTBConsentStatus = status == .granted ? .EXPLICIT_YES : .EXPLICIT_NO
+        let consentStatus = DTBConsentStatus(chartboostStatus: status)
         Self.amazon.setConsentStatus(consentStatus)
         log(.privacyUpdated(setting: "consentStatus", value: consentStatus.rawValue))
     }
@@ -256,4 +256,20 @@ private extension String {
     /// APS keys
     static let appIDKey = "application_id"
     static let prebidsKey = "prebids"
+}
+
+private extension DTBConsentStatus {
+    /// Convenience init that maps Chartboost Mediation GDPR status to Amazon Publisher Services GDPR status.
+    init(chartboostStatus: GDPRConsentStatus) {
+        switch chartboostStatus {
+        case .unknown:
+            self = .UNKNOWN
+        case .denied:
+            self = .EXPLICIT_NO
+        case .granted:
+            self = .EXPLICIT_YES
+        @unknown default:
+            self = .CONSENT_NOT_DEFINED
+        }
+    }
 }
