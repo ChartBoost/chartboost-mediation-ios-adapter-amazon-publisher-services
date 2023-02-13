@@ -198,8 +198,13 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Chartboost Mediation's.
     /// If some case cannot be mapped return `nil` to let Chartboost Mediation choose a default error code.
     func mapPrebidError(_ error: Error) -> ChartboostMediationError.Code? {
-        let code = DTBAdError(UInt32((error as NSError).code))
-        switch code {
+        guard let errorCode = UInt32(exactly: (error as NSError).code) else {
+            return nil
+        }
+
+        let dtbErrorCode = DTBAdError(errorCode)
+
+        switch dtbErrorCode {
         case NETWORK_ERROR:
             return .prebidFailureNetworkingError
         case NETWORK_TIMEOUT:
