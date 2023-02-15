@@ -66,7 +66,11 @@ class APSPreBiddingController {
                 }
 
                 // Capture the prebidder
-                partialResult[bidderConfiguration.chartboostPlacement] = bidder
+                if let chartboostPlacement = bidderConfiguration.chartboostPlacement {
+                    partialResult[chartboostPlacement] = bidder
+                } else if let heliumPlacement = bidderConfiguration.heliumPlacement {
+                    partialResult[heliumPlacement] = bidder // backward compatibility
+                }
             }
         }
     }
