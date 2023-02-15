@@ -14,7 +14,11 @@ struct APSPreBidderConfiguration: Codable {
     }
     
     /// Chartboost Mediation placement name.
-    let chartboostPlacement: String
+    let chartboostPlacement: String?
+
+    /// Legacy Chartboost Mediation (Helium) placement name for compatibility with backend schema.
+    @available(swift, deprecated: 4.0, message: "Use `chartboostPlacement` if it's not nil.")
+    let heliumPlacement: String?
     
     /// Amazon slot UUID associated with the Chartboost Mediation placement name.
     let partnerPlacement: String
