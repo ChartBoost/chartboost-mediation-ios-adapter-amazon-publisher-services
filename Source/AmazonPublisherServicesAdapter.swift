@@ -184,6 +184,8 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             return AmazonPublisherServicesAdapterInterstitialAd(adapter: self, request: request, delegate: delegate, prebiddingController: prebiddingController)
         case .banner:
             return AmazonPublisherServicesAdapterBannerAd(adapter: self, request: request, delegate: delegate, prebiddingController: prebiddingController)
+        case .rewarded:
+            return AmazonPublisherServicesAdapterRewardedAd(adapter: self, request: request, delegate: delegate, prebiddingController: prebiddingController)
         default:
             throw error(.loadFailureUnsupportedAdFormat)
         }
