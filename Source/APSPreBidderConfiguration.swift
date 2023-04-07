@@ -11,6 +11,7 @@ struct APSPreBidderConfiguration: Codable {
     enum AdType: String, Codable {
         case interstitial
         case banner
+        case rewarded
     }
     
     /// Chartboost Mediation placement name.

@@ -66,6 +66,11 @@ class APSPreBidder {
             } else {
                 return DTBAdSize(interstitialAdSizeWithSlotUUID: configuration.partnerPlacement)
             }
+        case .rewarded:
+            // Currently, all rewarded ads from APS are video
+            return DTBAdSize(videoAdSizeWithPlayerWidth: Int(DTB_VIDEO_WIDTH),
+                             height: Int(DTB_VIDEO_HEIGHT),
+                             andSlotUUID: configuration.partnerPlacement)
         }
     }
     
