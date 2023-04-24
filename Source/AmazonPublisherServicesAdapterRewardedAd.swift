@@ -56,7 +56,7 @@ final class AmazonPublisherServicesAdapterRewardedAd: AmazonPublisherServicesAda
         log(.showStarted)
         guard !prebiddingController.isDisabledDueToCOPPA else {
             let error = error(.showFailurePrivacyOptIn, description: "Showing has been disabled due to COPPA restrictions")
-            log(.loadFailed(error))
+            log(.showFailed(error))
             completion(.failure(error))
             return
         }
