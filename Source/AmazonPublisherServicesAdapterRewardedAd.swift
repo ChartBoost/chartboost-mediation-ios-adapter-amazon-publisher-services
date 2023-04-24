@@ -53,6 +53,7 @@ final class AmazonPublisherServicesAdapterRewardedAd: AmazonPublisherServicesAda
     /// - parameter viewController: The view controller on which the ad will be presented on.
     /// - parameter completion: Closure to be performed once the ad has been shown.
     func show(with viewController: UIViewController, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
+        log(.showStarted)
         guard !prebiddingController.isDisabledDueToCOPPA else {
             let error = error(.showFailurePrivacyOptIn, description: "Showing has been disabled due to COPPA restrictions")
             log(.loadFailed(error))
