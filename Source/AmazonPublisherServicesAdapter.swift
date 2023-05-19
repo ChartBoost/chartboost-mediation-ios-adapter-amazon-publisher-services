@@ -133,8 +133,8 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         //
         // The CMP flavor is set again in the event that `setGDPRConsentStatus()` is
         // called before `setGDPRApplies()` by the publisher.
-        Self.amazon.setCmpFlavor(.MOPUB_CMP)
-        log(.privacyUpdated(setting: "cmpFlavor", value: DTBCMPFlavor.MOPUB_CMP.rawValue))
+        Self.amazon.setCmpFlavor(.GOOGLE_CMP)
+        log(.privacyUpdated(setting: "cmpFlavor", value: DTBCMPFlavor.GOOGLE_CMP.rawValue))
 
         // Translate the explicit consent into the Amazon equivalent.
         let consentStatus = DTBConsentStatus(chartboostStatus: status)
