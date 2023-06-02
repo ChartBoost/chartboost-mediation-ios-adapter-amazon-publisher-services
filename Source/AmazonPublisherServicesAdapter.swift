@@ -17,7 +17,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// The version of the adapter.
     /// It should have either 5 or 6 digits separated by periods, where the first digit is Chartboost Mediation SDK's major version, the last digit is the adapter's build version, and intermediate digits are the partner SDK's version.
     /// Format: `<Chartboost Mediation major version>.<Partner major version>.<Partner minor version>.<Partner patch version>.<Partner build version>.<Adapter build version>` where `.<Partner build version>` is optional.
-    let adapterVersion = "4.4.6.0.1"
+    let adapterVersion = "4.4.7.0.0"
     
     /// The partner's unique identifier.
     let partnerIdentifier = "amazon_aps"
@@ -133,8 +133,8 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         //
         // The CMP flavor is set again in the event that `setGDPRConsentStatus()` is
         // called before `setGDPRApplies()` by the publisher.
-        Self.amazon.setCmpFlavor(.MOPUB_CMP)
-        log(.privacyUpdated(setting: "cmpFlavor", value: DTBCMPFlavor.MOPUB_CMP.rawValue))
+        Self.amazon.setCmpFlavor(.CMP_NOT_DEFINED)
+        log(.privacyUpdated(setting: "cmpFlavor", value: DTBCMPFlavor.CMP_NOT_DEFINED.rawValue))
 
         // Translate the explicit consent into the Amazon equivalent.
         let consentStatus = DTBConsentStatus(chartboostStatus: status)
@@ -184,6 +184,8 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             return AmazonPublisherServicesAdapterInterstitialAd(adapter: self, request: request, delegate: delegate, prebiddingController: prebiddingController)
         case .banner:
             return AmazonPublisherServicesAdapterBannerAd(adapter: self, request: request, delegate: delegate, prebiddingController: prebiddingController)
+        case .rewarded:
+            return AmazonPublisherServicesAdapterRewardedAd(adapter: self, request: request, delegate: delegate, prebiddingController: prebiddingController)
         default:
             throw error(.loadFailureUnsupportedAdFormat)
         }

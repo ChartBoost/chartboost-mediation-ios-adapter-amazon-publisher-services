@@ -108,6 +108,10 @@ extension AmazonPublisherServicesAdapterRewardedAd: DTBAdInterstitialDispatcherD
     }
 
     func interstitialWillLeaveApplication(_ interstitial: DTBAdInterstitialDispatcher?) {
+        log(.delegateCallIgnored)
+    }
+
+    func adClicked() {
         log(.didClick(error: nil))
         delegate?.didClick(self, details: [:]) ?? log(.delegateUnavailable)
     }
