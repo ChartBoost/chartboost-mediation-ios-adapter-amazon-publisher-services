@@ -4,16 +4,21 @@
 // license that can be found in the LICENSE file.
 
 import DTBiOSSDK
+import os.log
 
 /// A list of externally configurable properties pertaining to the partner SDK that can be retrieved and set by publishers.
 @objc public class AmazonPublisherServicesAdapterConfiguration: NSObject {
     
+    private static var log = OSLog(subsystem: "com.chartboost.mediation.adapter.amazon_aps", category: "Configuration")
+
     /// Flag that can optionally be set to enable the partner's test mode.
     /// Disabled by default.
     @objc public static var testMode: Bool = false {
         didSet {
             DTBAds.sharedInstance().testMode = testMode
-            print("Amazon Publishing Services SDK test mode set to \(testMode)")
+            if #available(iOS 12.0, *) {
+                os_log(.debug, log: log, "Amazon Publishing Services SDK test mode set to %{public}s", testMode ? "true" : "false")
+            }
         }
     }
     
@@ -22,7 +27,9 @@ import DTBiOSSDK
     @objc public static var verboseLogging: Bool = false {
         didSet {
             DTBAds.sharedInstance().setLogLevel(DTBLogLevelAll)
-            print("Amazon Publishing Services SDK verbose logging set to \(verboseLogging)")
+            if #available(iOS 12.0, *) {
+                os_log(.debug, log: log, "Amazon Publishing Services SDK verbose logging set to %{public}s", verboseLogging ? "true" : "false")
+            }
         }
     }
 }
