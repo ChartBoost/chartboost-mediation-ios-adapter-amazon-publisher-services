@@ -187,7 +187,12 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         case .rewarded:
             return AmazonPublisherServicesAdapterRewardedAd(adapter: self, request: request, delegate: delegate, prebiddingController: prebiddingController)
         default:
-            throw error(.loadFailureUnsupportedAdFormat)
+            // Not using the `.adaptiveBanner` case directly to maintain backward compatibility with Chartboost Mediation 4.0
+            if request.format.rawValue == "adaptive_banner" {
+                return AmazonPublisherServicesAdapterBannerAd(adapter: self, request: request, delegate: delegate, prebiddingController: prebiddingController)
+            } else {
+                throw error(.loadFailureUnsupportedAdFormat)
+            }
         }
     }
     
