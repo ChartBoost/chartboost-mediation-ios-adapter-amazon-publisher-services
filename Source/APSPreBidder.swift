@@ -50,7 +50,7 @@ class APSPreBidder {
     
     private static func amazonAdSize(from configuration: APSPreBidderConfiguration) -> DTBAdSize? {
         switch configuration.type {
-        case .banner:
+        case .banner, .adaptiveBanner:
             // Banner format requires width and height
             guard let width = configuration.width, let height = configuration.height else {
                 return nil
