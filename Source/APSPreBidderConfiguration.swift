@@ -12,6 +12,7 @@ struct APSPreBidderConfiguration: Codable {
         case interstitial
         case banner
         case rewarded
+        case adaptiveBanner = "adaptive_banner"
     }
     
     /// Chartboost Mediation placement name.
