@@ -11,6 +11,7 @@ Pod::Spec.new do |spec|
   spec.module_name  = 'ChartboostMediationAdapterAmazonPublisherServices'
   spec.source       = { :git => 'https://github.com/ChartBoost/chartboost-mediation-ios-adapter-amazon-publisher-services.git', :tag => spec.version }
   spec.source_files = 'Source/**/*.{swift}'
+  spec.resource_bundles = { 'ChartboostMediationAdapterAmazonPublisherServices' => ['PrivacyInfo.xcprivacy'] }
 
   # Minimum supported versions
   spec.swift_version         = '5.0'
