@@ -32,4 +32,10 @@ import os.log
             }
         }
     }
+
+    // TODO: Comments
+    @objc public static var preBiddingDelegate: AmazonPublisherServicesAdapterPreBiddingDelegate? {
+        get { AmazonPublisherServicesAdapter.preBiddingDelegate }
+        set { AmazonPublisherServicesAdapter.preBiddingDelegate = newValue }
+    }
 }

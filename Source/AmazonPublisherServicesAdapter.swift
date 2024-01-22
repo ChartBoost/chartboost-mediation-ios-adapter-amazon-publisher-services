@@ -8,12 +8,13 @@ import DTBiOSSDK
 import Foundation
 import UIKit
 
+// TODO: Review ALL APIs
 /// The Chartboost Mediation Amazon Publisher Services adapter.
 final class AmazonPublisherServicesAdapter: PartnerAdapter {
     
     /// The version of the partner SDK.
-    let partnerSDKVersion: String = DTBAds.version()
-    
+    var partnerSDKVersion: String { APS.version() }
+
     /// The version of the adapter.
     /// It should have either 5 or 6 digits separated by periods, where the first digit is Chartboost Mediation SDK's major version, the last digit is the adapter's build version, and intermediate digits are the partner SDK's version.
     /// Format: `<Chartboost Mediation major version>.<Partner major version>.<Partner minor version>.<Partner patch version>.<Partner build version>.<Adapter build version>` where `.<Partner build version>` is optional.
@@ -24,13 +25,19 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     
     /// The human-friendly partner name.
     let partnerDisplayName = "Amazon Publisher Services"
-    
-    /// Convenience accessor for the SDK shared isntance.
-    static var amazon: DTBAds { DTBAds.sharedInstance() }
 
-    /// Instance of the prebidding controller.
-    private lazy var prebiddingController = APSPreBiddingController(adapter: self)
-    
+    // TODO: Comments
+    static weak var preBiddingDelegate: AmazonPublisherServicesAdapterPreBiddingDelegate?
+
+    lazy var preBiddingManager = AmazonPublisherServicesAdapterPreBiddingManager(adapter: self)
+
+    private var mediationHints: [String: [AnyHashable: Any]] = [:]
+
+    /// Indicates if the pre-bidding controller is disabled due to COPPA restrictions.
+    /// When disabled, all in flight pre-bids will be cancelled and pre-bidding requests will
+    /// immediately complete with an error.
+    private(set) var isDisabledDueToCOPPA = false
+
     /// The designated initializer for the adapter.
     /// Chartboost Mediation SDK will use this constructor to create instances of conforming types.
     /// - parameter storage: An object that exposes storage managed by the Chartboost Mediation SDK to the adapter.
@@ -42,43 +49,17 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// - parameter completion: Closure to be performed by the adapter when it's done setting up. It should include an error indicating the cause for failure or `nil` if the operation finished successfully.
     func setUp(with configuration: PartnerConfiguration, completion: @escaping (Error?) -> Void) {
         log(.setUpStarted)
-        
-        guard let appID = configuration.appID, !appID.isEmpty else {
-            let error = error(.initializationFailureInvalidCredentials, description: "Missing \(String.appIDKey)")
-            log(.setUpFailed(error))
-            return completion(error)
+
+        // TODO: Comments
+        if configuration.useManagedPreBidding {
+            log("Using managed prebidding and setup")
+            Self.preBiddingDelegate = preBiddingManager
+            preBiddingManager.setUp(with: configuration, completion: completion)
+        } else {
+            log("Relying on publisher-side APS setup and prebidding integration")
+            log(.setUpSucceded)
+            completion(nil)
         }
-
-        // Extract the prebidding settings and initialize the prebidding controller.
-
-        guard let preBidderConfigurations = configuration.preBidderConfigurations, !preBidderConfigurations.isEmpty else {
-            let error = error(.initializationFailureInvalidCredentials, description: "Missing \(String.prebidsKey)")
-            log(.setUpFailed(error))
-            return completion(error)
-        }
-
-        prebiddingController.setup(settings: preBidderConfigurations)
-
-        // Initialize Amazon APS SDK.
-        let amazon = Self.amazon
-        amazon.setAppKey(appID)
-        amazon.setAdNetworkInfo(.init(networkName: DTBADNETWORK_OTHER))
-        amazon.mraidPolicy = CUSTOM_MRAID
-        amazon.mraidCustomVersions = ["1.0", "2.0", "3.0"]
-
-        // Wait 0.25 seconds since it takes time for APS to get into an `isReady` state
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [unowned self] in
-            if amazon.isReady {
-                log(.setUpSucceded)
-                completion(nil)
-            }
-            else {
-                let error = error(.initializationFailureTimeout, description: "Failed to be ready within the expected timeframe of 250ms")
-                log(.setUpFailed(error))
-                completion(error)
-            }
-        }
-
     }
     
     /// Fetches bidding tokens needed for the partner to participate in an auction.
@@ -87,27 +68,37 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     func fetchBidderInformation(request: PreBidRequest, completion: @escaping ([String : String]?) -> Void) {
         log(.fetchBidderInfoStarted(request))
 
-        guard !prebiddingController.isDisabledDueToCOPPA else {
+        // TODO: Comments
+
+        guard !isDisabledDueToCOPPA else {
             let error = error(.prebidFailureUnknown, description: "Bidder info fetch has been disabled due to COPPA restrictions")
             log(.fetchBidderInfoFailed(request, error: error))
             completion(nil)
             return
         }
 
-        prebiddingController.fetchPrebiddingToken(chartboostMediationPlacementName: request.chartboostPlacement) { [weak self] result in
-            guard let self = self else { return }
-            switch result {
-            case .success(let pricePoint):
-                if let pricePoint = pricePoint {
-                    self.log(.fetchBidderInfoSucceeded(request))
-                    completion([request.chartboostPlacement: pricePoint])
-                } else {
-                    let error = self.error(.prebidFailureInvalidArgument, description: "Price point value not supplied")
-                    self.log(.fetchBidderInfoFailed(request, error: error))
-                    completion(nil)
-                }
-            case .failure(let error):
-                self.log(.fetchBidderInfoFailed(request, error: error))
+        guard let preBiddingDelegate = Self.preBiddingDelegate else {
+            let error = error(.prebidFailurePartnerNotIntegrated, description: "Prebidding delegate not set by publisher.")
+            log(.fetchBidderInfoFailed(request, error: error))
+            completion(nil)
+            return
+        }
+
+        let adapterRequest = AmazonPublisherServicesAdapterPreBidRequest(
+            chartboostPlacement: request.chartboostPlacement,
+            format: request.format.rawValue
+        )
+        preBiddingDelegate.onPreBid(request: adapterRequest) { [weak self] result in
+            guard let self else {
+                return
+            }
+            if let adInfo = result.adInfo {
+                log(.fetchBidderInfoSucceeded(request))
+                mediationHints[request.chartboostPlacement] = adInfo.mediationHints
+                completion([request.chartboostPlacement: adInfo.pricePoint])
+            } else {
+                let error = result.error ?? self.error(.prebidFailureUnknown)
+                log(.fetchBidderInfoFailed(request, error: error))
                 completion(nil)
             }
         }
@@ -117,29 +108,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// - parameter applies: `true` if GDPR applies, `false` if not, `nil` if the publisher has not provided this information.
     /// - parameter status: One of the `GDPRConsentStatus` values depending on the user's preference.
     func setGDPR(applies: Bool?, status: GDPRConsentStatus) {
-        guard applies == true else {
-            return
-        }
-
-        // The `setCMPFlavor()` method should be invoked only if GDPR applies to the user.
-        // By default, the CMP flavor is the TCFv2 specification which reads the GDPR
-        // applicability and consent status directly from `NSUserDefaults` using the following
-        // keys:
-        // - IABTCF_gdprApplies – 0 if GDPR does not apply for the user or 1 if GDPR does apply for the user
-        // - IABTCF_TCString – encoded consent string value
-        //
-        // Since the Chartboost Mediation SDK does not support the TCFv2 CMP framework, we will be using
-        // the MoPub CMP flavor which is a manually specified consent mechanism.
-        //
-        // The CMP flavor is set again in the event that `setGDPRConsentStatus()` is
-        // called before `setGDPRApplies()` by the publisher.
-        Self.amazon.setCmpFlavor(.CMP_NOT_DEFINED)
-        log(.privacyUpdated(setting: "cmpFlavor", value: DTBCMPFlavor.CMP_NOT_DEFINED.rawValue))
-
-        // Translate the explicit consent into the Amazon equivalent.
-        let consentStatus = DTBConsentStatus(chartboostStatus: status)
-        Self.amazon.setConsentStatus(consentStatus)
-        log(.privacyUpdated(setting: "consentStatus", value: consentStatus.rawValue))
+        // APS supports only TCFv2 strings, so there's nothing for the adapter to do.
     }
 
     /// Indicates if the user is subject to COPPA or not.
@@ -159,7 +128,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         // Even if your app is directed at a mixed audience, including people both over and under the age of 13, you may not show ads from APS to
         // users you know are under 13. This applies equally even in an app that is not child-directed. For example, if you ask a user for their age and
         // they indicate they are under 13, you may not show an ad to them that you source from the APS integration and/or TAM.
-        prebiddingController.isDisabledDueToCOPPA = isChildDirected
+        self.isDisabledDueToCOPPA = isChildDirected
         log(.privacyUpdated(setting: "isDisabledDueToCOPPA", value: isChildDirected))
     }
     
@@ -167,7 +136,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// - parameter hasGivenConsent: A boolean indicating if the user has given consent.
     /// - parameter privacyString: An IAB-compliant string indicating the CCPA status.
     func setCCPA(hasGivenConsent: Bool, privacyString: String) {
-        prebiddingController.ccpaValue = privacyString
+        preBiddingManager.ccpaPrivacyString = privacyString
         log(.privacyUpdated(setting: "ccpaValue", value: privacyString))
     }
     
@@ -179,18 +148,29 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// - parameter request: Information about the ad load request.
     /// - parameter delegate: The delegate that will receive ad life-cycle notifications.
     func makeAd(request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) throws -> PartnerAd {
+
+        guard !isDisabledDueToCOPPA else {
+            throw error(.loadFailurePrivacyOptIn, description: "Ad load disabled due to COPPA restrictions")
+        }
+
+        // TODO: False?
         // This partner supports multiple loads for the same partner placement.
+
+        // TODO: Comments
+        let bidPayload = mediationHints[request.chartboostPlacement]
+        mediationHints[request.chartboostPlacement] = nil
+
         switch request.format {
         case .interstitial:
-            return AmazonPublisherServicesAdapterInterstitialAd(adapter: self, request: request, delegate: delegate, prebiddingController: prebiddingController)
+            return AmazonPublisherServicesAdapterInterstitialAd(adapter: self, request: request, delegate: delegate, bidPayload: bidPayload)
         case .banner:
-            return AmazonPublisherServicesAdapterBannerAd(adapter: self, request: request, delegate: delegate, prebiddingController: prebiddingController)
+            return AmazonPublisherServicesAdapterBannerAd(adapter: self, request: request, delegate: delegate, bidPayload: bidPayload)
         case .rewarded:
-            return AmazonPublisherServicesAdapterRewardedAd(adapter: self, request: request, delegate: delegate, prebiddingController: prebiddingController)
+            return AmazonPublisherServicesAdapterRewardedAd(adapter: self, request: request, delegate: delegate, bidPayload: bidPayload)
         default:
             // Not using the `.adaptiveBanner` case directly to maintain backward compatibility with Chartboost Mediation 4.0
             if request.format.rawValue == "adaptive_banner" {
-                return AmazonPublisherServicesAdapterBannerAd(adapter: self, request: request, delegate: delegate, prebiddingController: prebiddingController)
+                return AmazonPublisherServicesAdapterBannerAd(adapter: self, request: request, delegate: delegate, bidPayload: bidPayload)
             } else {
                 throw error(.loadFailureUnsupportedAdFormat)
             }
@@ -245,7 +225,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             return .loadFailureNetworkingError
         case .SampleErrorCodeNoInventory:
             return .loadFailureNoFill
-        @unknown default:
+        default:
             return nil
         }
     }
@@ -253,34 +233,15 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
 
 /// Convenience extension to access APS credentials from the configuration.
 private extension PartnerConfiguration {
-    var appID: String? { credentials[.appIDKey] as? String }
 
-    var preBidderConfigurations: [APSPreBidderConfiguration]? {
-        guard let prebids = credentials[.prebidsKey] as? [[String: Any]] else {
-            return nil
-        }
-        return prebids.compactMap(APSPreBidderConfiguration.makeConfiguration(from:))
+    var useManagedPreBidding: Bool {
+        credentials[.managedPrebiddingKey] as? Bool ?? false
     }
 }
 
-private extension String {
-    /// APS keys
+extension String {
+    /// APS configuration keys
     static let appIDKey = "application_id"
     static let prebidsKey = "prebids"
-}
-
-private extension DTBConsentStatus {
-    /// Convenience init that maps Chartboost Mediation GDPR status to Amazon Publisher Services GDPR status.
-    init(chartboostStatus: GDPRConsentStatus) {
-        switch chartboostStatus {
-        case .unknown:
-            self = .UNKNOWN
-        case .denied:
-            self = .EXPLICIT_NO
-        case .granted:
-            self = .EXPLICIT_YES
-        @unknown default:
-            self = .CONSENT_NOT_DEFINED
-        }
-    }
+    static let managedPrebiddingKey = "managed_prebidding"
 }

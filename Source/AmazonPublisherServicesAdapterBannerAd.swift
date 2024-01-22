@@ -22,7 +22,7 @@ final class AmazonPublisherServicesAdapterBannerAd: AmazonPublisherServicesAdapt
     /// - parameter completion: Closure to be performed once the ad has been loaded.
     func load(with viewController: UIViewController?, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
         log(.loadStarted)
-        guard !prebiddingController.isDisabledDueToCOPPA else {
+        guard !amazonAdapter.isDisabledDueToCOPPA else {
             let error = error(.loadFailurePrivacyOptIn, description: "Loading has been disabled due to COPPA restrictions")
             log(.loadFailed(error))
             completion(.failure(error))
@@ -30,7 +30,7 @@ final class AmazonPublisherServicesAdapterBannerAd: AmazonPublisherServicesAdapt
         }
         
         // Validate that there is a bid payload available to fetch.
-        guard let mediationHints = prebiddingController.bidPayload(chartboostMediationPlacementName: request.chartboostPlacement) else {
+        guard let bidPayload else {
             let error = error(.loadFailureAuctionNoBid)
             log(.loadFailed(error))
             completion(.failure(error))
@@ -52,7 +52,7 @@ final class AmazonPublisherServicesAdapterBannerAd: AmazonPublisherServicesAdapt
             
             // Fetch the creative from the mediation hints.
             let adLoader = DTBAdBannerDispatcher(adFrame: frame, delegate: self)
-            adLoader.fetchBannerAd(withParameters: mediationHints)
+            adLoader.fetchBannerAd(withParameters: bidPayload)
             self.adLoader = adLoader
         }
     }
