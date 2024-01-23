@@ -117,13 +117,13 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             }
             if let adInfo = result.adInfo {
                 // Success: save the bid payload to use later on load, return the price point.
-                log(.fetchBidderInfoSucceeded(request))
-                bidPayloads[request.chartboostPlacement] = adInfo.bidPayload
+                self.log(.fetchBidderInfoSucceeded(request))
+                self.bidPayloads[request.chartboostPlacement] = adInfo.bidPayload
                 completion([request.chartboostPlacement: adInfo.pricePoint])
             } else {
                 // Failure
                 let error = result.error ?? self.error(.prebidFailureUnknown)
-                log(.fetchBidderInfoFailed(request, error: error))
+                self.log(.fetchBidderInfoFailed(request, error: error))
                 completion(nil)
             }
         }

@@ -60,7 +60,7 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: AmazonPublisherServ
         bidders = preBidderConfigurations.reduce(into: [:]) { partialResult, bidderConfiguration in
 
             // Attempt to create a new bidder for the Chartboost Mediation placement
-            guard let bidder = AmazonPublisherServicesAdapterPreBidder(configuration: bidderConfiguration, adapter: adapter) else {
+            guard let bidder = AmazonPublisherServicesAdapterPreBidder(configuration: bidderConfiguration, adapter: self.adapter) else {
                 return
             }
 
@@ -90,11 +90,11 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: AmazonPublisherServ
                 return
             }
             if amazon.isReady {
-                adapter.log(.setUpSucceded)
+                self.adapter.log(.setUpSucceded)
                 completion(nil)
             } else {
-                let error = adapter.error(.initializationFailureTimeout, description: "Failed to be ready within the expected timeframe of 250ms")
-                adapter.log(.setUpFailed(error))
+                let error = self.adapter.error(.initializationFailureTimeout, description: "Failed to be ready within the expected timeframe of 250ms")
+                self.adapter.log(.setUpFailed(error))
                 completion(error)
             }
         }
