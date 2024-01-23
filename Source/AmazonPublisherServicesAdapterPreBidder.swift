@@ -101,7 +101,7 @@ extension AmazonPublisherServicesAdapterPreBidder: DTBAdCallback {
     func onFailure(_ error: DTBAdError) {
         // Clear the cache state
         isLoading = false
-        prebidCallback?(.init(error: error))
+        prebidCallback?(.init(error: adapter.partnerError(Int(error.rawValue))))
         prebidCallback = nil
     }
     

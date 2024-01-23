@@ -14,5 +14,4 @@ jobs:
     steps:
       - uses: chartboost/chartboost-mediation-ios-actions/adapter-smoke-test@v1
         with:
-                // TODO: Try removing
           allow-warnings: true

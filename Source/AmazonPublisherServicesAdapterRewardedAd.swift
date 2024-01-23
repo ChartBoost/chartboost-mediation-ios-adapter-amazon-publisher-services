@@ -22,7 +22,7 @@ final class AmazonPublisherServicesAdapterRewardedAd: AmazonPublisherServicesAda
     /// - parameter completion: Closure to be performed once the ad has been loaded.
     func load(with viewController: UIViewController?, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
         log(.loadStarted)
-        guard !amazonAdapter.isChildDirected else {
+        guard !amazonAdapter.isDisabledDueToCOPPA else {
             let error = error(.loadFailurePrivacyOptIn, description: "Loading has been disabled due to COPPA restrictions")
             log(.loadFailed(error))
             completion(.failure(error))
@@ -54,7 +54,7 @@ final class AmazonPublisherServicesAdapterRewardedAd: AmazonPublisherServicesAda
     /// - parameter completion: Closure to be performed once the ad has been shown.
     func show(with viewController: UIViewController, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
         log(.showStarted)
-        guard !amazonAdapter.isChildDirected else {
+        guard !amazonAdapter.isDisabledDueToCOPPA else {
             let error = error(.showFailurePrivacyOptIn, description: "Showing has been disabled due to COPPA restrictions")
             log(.showFailed(error))
             completion(.failure(error))

@@ -2,11 +2,16 @@
 import ChartboostMediationSDK
 import DTBiOSSDK
 
+/// Manages APS setup and pre-bidding when managed pre-bidding is enabled.
+/// This is an internal feature and it's not available for general use.
+///
+/// Prebidding feature is restricted for APS. Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
+/// The adapter handles APS initialization and wrapped prebidding only when the managed prebidding flag is enabled.
+/// For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
 final class AmazonPublisherServicesAdapterPreBiddingManager: AmazonPublisherServicesAdapterPreBiddingDelegate {
 
     unowned private let adapter: AmazonPublisherServicesAdapter
 
-    // TODO: Comments
     /// The CCPA value to use for all `AmazonPublisherServicesAdapterPreBidder` instances.
     /// - Note: Setting CCPA to `nil` will explicitly set CCPA to does not apply `"1---"`.
     var ccpaPrivacyString: String? = nil {
@@ -21,13 +26,14 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: AmazonPublisherServ
         }
     }
 
-    /// Current set of bidders. Map of `[Chartboost Mediation Placement Identifier: AmazonPublisherServicesAdapterPreBidder]`
+    /// Current set of bidders keyed by Chartboost placement.
     private var bidders: [String: AmazonPublisherServicesAdapterPreBidder] = [:]
 
     init(adapter: AmazonPublisherServicesAdapter) {
         self.adapter = adapter
     }
 
+    /// Initializes the APS SDK.
     func setUp(with configuration: PartnerConfiguration, completion: @escaping (Error?) -> Void) {
         // Extract credentials
         guard let appID = configuration.appID, !appID.isEmpty else {
@@ -46,8 +52,7 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: AmazonPublisherServ
         }
 
         // Parse the settings to generate the prebidders.
-        // Assumes that there will only ever be a single `CHBHPreBidSettings` per
-        // Chartboost Mediation placement identifier.
+        // Assumes that there will only ever be a single prebidder per Chartboost placement.
         bidders = preBidderConfigurations.reduce(into: [:]) { partialResult, bidderConfiguration in
 
             // Attempt to create a new bidder for the Chartboost Mediation placement
@@ -55,7 +60,6 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: AmazonPublisherServ
                 return
             }
 
-            // TODO: Do not generate all loaders on setup?
             // Set the CCPA value before prebidding if it exists.
             if let ccpaPrivacyString {
                 bidder.setCCPA(ccpaPrivacyString)
@@ -92,6 +96,7 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: AmazonPublisherServ
         }
     }
 
+    /// Handles a prebid operation.
     func onPreBid(request: AmazonPublisherServicesAdapterPreBidRequest, completion: @escaping (AmazonPublisherServicesAdapterPreBidResult) -> Void) {
 
         // Get the prebidder for the placement.
@@ -101,6 +106,7 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: AmazonPublisherServ
             return
         }
 
+        // Have the prebidder load the ad.
         prebidder.fetchPrebiddingToken(completion: completion)
     }
 }

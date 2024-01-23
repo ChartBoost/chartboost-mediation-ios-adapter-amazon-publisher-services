@@ -33,7 +33,13 @@ import os.log
         }
     }
 
-    // TODO: Comments
+    /// A delegate that performs pre-bidding operations by integrating directly with the Amazon Publisher Services SDK.
+    /// Publishers are required to implement the `AmazonPublisherServicesAdapterPreBiddingDelegate` delegate and set this
+    /// property during app initialization.
+    ///
+    /// Prebidding feature is restricted for APS. Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
+    /// The adapter handles APS initialization and wrapped prebidding only when the managed prebidding flag is enabled.
+    /// For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
     @objc public static var preBiddingDelegate: AmazonPublisherServicesAdapterPreBiddingDelegate? {
         get { AmazonPublisherServicesAdapter.preBiddingDelegate }
         set { AmazonPublisherServicesAdapter.preBiddingDelegate = newValue }

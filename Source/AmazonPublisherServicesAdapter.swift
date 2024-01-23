@@ -8,7 +8,6 @@ import DTBiOSSDK
 import Foundation
 import UIKit
 
-// TODO: Review ALL APIs
 /// The Chartboost Mediation Amazon Publisher Services adapter.
 final class AmazonPublisherServicesAdapter: PartnerAdapter {
     
@@ -26,14 +25,26 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// The human-friendly partner name.
     let partnerDisplayName = "Amazon Publisher Services"
 
-    // TODO: Comments
+    /// A delegate that performs pre-bidding operations by integrating directly with the Amazon Publisher Services SDK.
+    ///
+    /// Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
+    /// The adapter handles APS initialization and prebidding only when the managed prebidding flag is enabled (not available for general use).
+    /// For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
     static weak var preBiddingDelegate: AmazonPublisherServicesAdapterPreBiddingDelegate?
 
+    /// Manages APS setup and pre-bidding when managed pre-bidding is enabled.
+    /// This is an internal feature and it's not available for general use.
+    ///
+    /// Prebidding feature is restricted for APS. Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
+    /// The adapter handles APS initialization and wrapped prebidding only when the managed prebidding flag is enabled.
+    /// For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
     lazy var preBiddingManager = AmazonPublisherServicesAdapterPreBiddingManager(adapter: self)
 
-    private var mediationHints: [String: [AnyHashable: Any]] = [:]
+    /// Bid payloads keyed by Chartboost placement.
+    /// Holds the payloads obtained from pre-bidding operations, which are needed to load an ad.
+    private var bidPayloads: [String: [AnyHashable: Any]] = [:]
 
-    /// Indicates if the pre-bidding controller is disabled due to COPPA restrictions.
+    /// Indicates if ad loading and showing is disabled due to COPPA restrictions.
     /// When disabled, all in flight pre-bids will be cancelled and pre-bidding requests will
     /// immediately complete with an error.
     private(set) var isDisabledDueToCOPPA = false
@@ -50,12 +61,18 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     func setUp(with configuration: PartnerConfiguration, completion: @escaping (Error?) -> Void) {
         log(.setUpStarted)
 
-        // TODO: Comments
+        // The adapter handles APS initialization only when the managed prebidding flag is enabled, for internal use only.
+        //
+        // Prebidding feature is restricted for APS. Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
+        // The adapter handles APS initialization and wrapped prebidding only when the managed prebidding flag is enabled.
+        // For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
         if configuration.useManagedPreBidding {
+            // Initialize APS
             log("Using managed prebidding and setup")
             Self.preBiddingDelegate = preBiddingManager
             preBiddingManager.setUp(with: configuration, completion: completion)
         } else {
+            // Succeed immediately. The publisher is expected to manage APS initialization directly.
             log("Relying on publisher-side APS setup and prebidding integration")
             log(.setUpSucceded)
             completion(nil)
@@ -68,8 +85,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     func fetchBidderInformation(request: PreBidRequest, completion: @escaping ([String : String]?) -> Void) {
         log(.fetchBidderInfoStarted(request))
 
-        // TODO: Comments
-
+        // Disable bidding for underage users
         guard !isDisabledDueToCOPPA else {
             let error = error(.prebidFailureUnknown, description: "Bidder info fetch has been disabled due to COPPA restrictions")
             log(.fetchBidderInfoFailed(request, error: error))
@@ -77,6 +93,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             return
         }
 
+        // Fail if no pre-bidding delegate was set by the publisher (does not apply when managed pre-bidding is enabled)
         guard let preBiddingDelegate = Self.preBiddingDelegate else {
             let error = error(.prebidFailurePartnerNotIntegrated, description: "Prebidding delegate not set by publisher.")
             log(.fetchBidderInfoFailed(request, error: error))
@@ -84,6 +101,12 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             return
         }
 
+        // Start pre-bidding operation.
+        // The adapter handles APS pre-bidding only when the managed prebidding flag is enabled, for internal use only.
+        //
+        // Prebidding feature is restricted for APS. Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
+        // The adapter handles APS initialization and wrapped prebidding only when the managed prebidding flag is enabled.
+        // For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
         let adapterRequest = AmazonPublisherServicesAdapterPreBidRequest(
             chartboostPlacement: request.chartboostPlacement,
             format: request.format.rawValue
@@ -93,10 +116,12 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
                 return
             }
             if let adInfo = result.adInfo {
+                // Success: save the bid payload to use later on load, return the price point.
                 log(.fetchBidderInfoSucceeded(request))
-                mediationHints[request.chartboostPlacement] = adInfo.mediationHints
+                bidPayloads[request.chartboostPlacement] = adInfo.bidPayload
                 completion([request.chartboostPlacement: adInfo.pricePoint])
             } else {
+                // Failure
                 let error = result.error ?? self.error(.prebidFailureUnknown)
                 log(.fetchBidderInfoFailed(request, error: error))
                 completion(nil)
@@ -124,12 +149,12 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         //
         // The CMP flavor is set again in the event that `setGDPRConsentStatus()` is
         // called before `setGDPRApplies()` by the publisher.
-        Self.amazon.setCmpFlavor(.CMP_NOT_DEFINED)
+        DTBAds.sharedInstance().setCmpFlavor(.CMP_NOT_DEFINED)
         log(.privacyUpdated(setting: "cmpFlavor", value: DTBCMPFlavor.CMP_NOT_DEFINED.rawValue))
 
         // Translate the explicit consent into the Amazon equivalent.
         let consentStatus = DTBConsentStatus(chartboostStatus: status)
-        Self.amazon.setConsentStatus(consentStatus)
+        DTBAds.sharedInstance().setConsentStatus(consentStatus)
         log(.privacyUpdated(setting: "consentStatus", value: consentStatus.rawValue))
     }
 
@@ -170,18 +195,11 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// - parameter request: Information about the ad load request.
     /// - parameter delegate: The delegate that will receive ad life-cycle notifications.
     func makeAd(request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) throws -> PartnerAd {
+        // First pop the bid payload for the requested placement, previously obtained during pre-bidding.
+        let bidPayload = bidPayloads[request.chartboostPlacement]
+        bidPayloads[request.chartboostPlacement] = nil
 
-        guard !isDisabledDueToCOPPA else {
-            throw error(.loadFailurePrivacyOptIn, description: "Ad load disabled due to COPPA restrictions")
-        }
-
-        // TODO: False?
         // This partner supports multiple loads for the same partner placement.
-
-        // TODO: Comments
-        let bidPayload = mediationHints[request.chartboostPlacement]
-        mediationHints[request.chartboostPlacement] = nil
-
         switch request.format {
         case .interstitial:
             return AmazonPublisherServicesAdapterInterstitialAd(adapter: self, request: request, delegate: delegate, bidPayload: bidPayload)
@@ -266,4 +284,20 @@ extension String {
     static let appIDKey = "application_id"
     static let prebidsKey = "prebids"
     static let managedPrebiddingKey = "managed_prebidding"
+}
+
+private extension DTBConsentStatus {
+    /// Convenience init that maps Chartboost Mediation GDPR status to Amazon Publisher Services GDPR status.
+    init(chartboostStatus: GDPRConsentStatus) {
+        switch chartboostStatus {
+        case .unknown:
+            self = .UNKNOWN
+        case .denied:
+            self = .EXPLICIT_NO
+        case .granted:
+            self = .EXPLICIT_YES
+        @unknown default:
+            self = .CONSENT_NOT_DEFINED
+        }
+    }
 }
