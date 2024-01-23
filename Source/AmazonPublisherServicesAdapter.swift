@@ -108,7 +108,29 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// - parameter applies: `true` if GDPR applies, `false` if not, `nil` if the publisher has not provided this information.
     /// - parameter status: One of the `GDPRConsentStatus` values depending on the user's preference.
     func setGDPR(applies: Bool?, status: GDPRConsentStatus) {
-        // APS supports only TCFv2 strings, so there's nothing for the adapter to do.
+        guard applies == true else {
+            return
+        }
+
+        // The `setCMPFlavor()` method should be invoked only if GDPR applies to the user.
+        // By default, the CMP flavor is the TCFv2 specification which reads the GDPR
+        // applicability and consent status directly from `NSUserDefaults` using the following
+        // keys:
+        // - IABTCF_gdprApplies – 0 if GDPR does not apply for the user or 1 if GDPR does apply for the user
+        // - IABTCF_TCString – encoded consent string value
+        //
+        // Since the Chartboost Mediation SDK does not support the TCFv2 CMP framework, we will be using
+        // the MoPub CMP flavor which is a manually specified consent mechanism.
+        //
+        // The CMP flavor is set again in the event that `setGDPRConsentStatus()` is
+        // called before `setGDPRApplies()` by the publisher.
+        Self.amazon.setCmpFlavor(.CMP_NOT_DEFINED)
+        log(.privacyUpdated(setting: "cmpFlavor", value: DTBCMPFlavor.CMP_NOT_DEFINED.rawValue))
+
+        // Translate the explicit consent into the Amazon equivalent.
+        let consentStatus = DTBConsentStatus(chartboostStatus: status)
+        Self.amazon.setConsentStatus(consentStatus)
+        log(.privacyUpdated(setting: "consentStatus", value: consentStatus.rawValue))
     }
 
     /// Indicates if the user is subject to COPPA or not.
