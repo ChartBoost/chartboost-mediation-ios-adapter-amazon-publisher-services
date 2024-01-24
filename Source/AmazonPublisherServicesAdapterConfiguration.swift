@@ -44,4 +44,17 @@ import os.log
         get { AmazonPublisherServicesAdapter.preBiddingDelegate }
         set { AmazonPublisherServicesAdapter.preBiddingDelegate = newValue }
     }
+
+    /// Info required by Amazon Publisher Services SDK to initialize and load ads, configured on the
+    /// Chartboost Mediation dashboard, and obtained on setup.
+    ///
+    /// Publishers can use it to obtain the info needed for their direct APS integration.
+    /// Note the dictionary will be empty until the adapter is set up by Chartboost Mediation.
+    ///
+    /// Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
+    /// The adapter handles APS initialization and prebidding only when the managed prebidding flag is enabled.
+    /// For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
+    @objc public static var credentials: [String: Any] {
+        AmazonPublisherServicesAdapter.credentials
+    }
 }

@@ -32,6 +32,10 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
     static weak var preBiddingDelegate: AmazonPublisherServicesAdapterPreBiddingDelegate?
 
+    /// Info required by Amazon Publisher Services SDK to initialize and load ads, configured on the
+    /// Chartboost Mediation dashboard, and obtained on setup.
+    static private(set) var credentials: [String: Any] = [:]
+
     /// Manages APS setup and pre-bidding when managed pre-bidding is enabled.
     ///
     /// Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
@@ -48,6 +52,11 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// immediately complete with an error.
     private(set) var isDisabledDueToCOPPA = false
 
+    /// Reads the credentials obtained on setup to find out if managed pre-bidding is enabled or not.
+    private var useManagedPreBidding: Bool {
+        Self.credentials[.managedPrebiddingKey] as? Bool ?? false
+    }
+
     /// The designated initializer for the adapter.
     /// Chartboost Mediation SDK will use this constructor to create instances of conforming types.
     /// - parameter storage: An object that exposes storage managed by the Chartboost Mediation SDK to the adapter.
@@ -60,14 +69,18 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     func setUp(with configuration: PartnerConfiguration, completion: @escaping (Error?) -> Void) {
         log(.setUpStarted)
 
+        /// Save and expose partner credentials so publishers can access them as needed for their
+        /// APS initialization and bid request integrations.
+        Self.credentials = configuration.credentials
+
         // Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
         // The adapter handles APS initialization and prebidding only when the managed prebidding flag is enabled.
         // For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
-        if configuration.useManagedPreBidding && Self.preBiddingDelegate == nil {
+        if useManagedPreBidding && Self.preBiddingDelegate == nil {
             // Initialize APS
             log("Using managed prebidding and setup")
             Self.preBiddingDelegate = preBiddingManager
-            preBiddingManager.setUp(with: configuration.credentials) { [weak self] error in
+            preBiddingManager.setUp(with: Self.credentials) { [weak self] error in
                 if let error = error {
                     self?.log(.setUpFailed(error))
                 } else {
@@ -112,7 +125,8 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         // For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
         let adapterRequest = AmazonPublisherServicesAdapterPreBidRequest(
             chartboostPlacement: request.chartboostPlacement,
-            format: request.format.rawValue
+            format: request.format.rawValue,
+            partnerSettings: preBidPartnerSettings(forPlacement: request.chartboostPlacement) ?? [:]
         )
         preBiddingDelegate.onPreBid(request: adapterRequest) { [weak self] result in
             guard let self else {
@@ -305,13 +319,14 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             return nil
         }
     }
-}
 
-/// Convenience extension to access APS credentials from the configuration.
-private extension PartnerConfiguration {
-
-    var useManagedPreBidding: Bool {
-        credentials[.managedPrebiddingKey] as? Bool ?? false
+    /// Returns the partner settings associated to a given placement, by looking into the credentials obtained on setup.
+    private func preBidPartnerSettings(forPlacement placement: String) -> [String: Any]? {
+        guard let prebids = Self.credentials[.prebidsKey] as? [[String: Any]] else {
+            log("Failed to obtain prebids from partner credentials.")
+            return nil
+        }
+        return prebids.first(where: { $0["chartboost_placement"] as? String == placement })
     }
 }
 
