@@ -11,7 +11,7 @@ import DTBiOSSDK
 /// Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
 /// The adapter handles APS initialization and prebidding only when the managed prebidding flag is enabled.
 /// For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
-final class AmazonPublisherServicesAdapterPreBiddingManager: AmazonPublisherServicesAdapterPreBiddingDelegate {
+final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPublisherServicesAdapterPreBiddingDelegate {
 
     enum SetUpError: String, Error {
         case invalidCredentialsMissingAppID = "Missing 'application_id'"
@@ -42,16 +42,16 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: AmazonPublisherServ
     private var bidders: [String: AmazonPublisherServicesAdapterPreBidder] = [:]
 
     /// Initializes the APS SDK.
-    func setUp(with credentials: [String: Any], completion: @escaping (Error?) -> Void) {
+    func setUp(with credentials: [String: Any], completion: ((Error?) -> Void)?) {
         // Extract credentials
         guard let appID = appID(from: credentials), !appID.isEmpty else {
-            completion(SetUpError.invalidCredentialsMissingAppID)
+            completion?(SetUpError.invalidCredentialsMissingAppID)
             return
         }
 
         // Extract the prebidding settings and initialize the prebidding controller.
         guard let preBidderConfigurations = preBidderConfigurations(from: credentials), !preBidderConfigurations.isEmpty else {
-            completion(SetUpError.invalidCredentialsMissingPrebids)
+            completion?(SetUpError.invalidCredentialsMissingPrebids)
             return
         }
 
@@ -90,9 +90,9 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: AmazonPublisherServ
                 return
             }
             if amazon.isReady {
-                completion(nil)
+                completion?(nil)
             } else {
-                completion(SetUpError.timeout)
+                completion?(SetUpError.timeout)
             }
         }
     }
