@@ -7,10 +7,9 @@ import ChartboostMediationSDK
 import DTBiOSSDK
 
 /// Manages APS setup and pre-bidding when managed pre-bidding is enabled.
-/// This is an internal feature and it's not available for general use.
 ///
-/// Prebidding feature is restricted for APS. Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
-/// The adapter handles APS initialization and wrapped prebidding only when the managed prebidding flag is enabled.
+/// Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
+/// The adapter handles APS initialization and prebidding only when the managed prebidding flag is enabled.
 /// For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
 final class AmazonPublisherServicesAdapterPreBiddingManager: AmazonPublisherServicesAdapterPreBiddingDelegate {
 

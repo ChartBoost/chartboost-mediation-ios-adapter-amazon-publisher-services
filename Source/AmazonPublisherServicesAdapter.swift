@@ -28,15 +28,14 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// A delegate that performs pre-bidding operations by integrating directly with the Amazon Publisher Services SDK.
     ///
     /// Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
-    /// The adapter handles APS initialization and prebidding only when the managed prebidding flag is enabled (not available for general use).
+    /// The adapter handles APS initialization and prebidding only when the managed prebidding flag is enabled.
     /// For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
     static weak var preBiddingDelegate: AmazonPublisherServicesAdapterPreBiddingDelegate?
 
     /// Manages APS setup and pre-bidding when managed pre-bidding is enabled.
-    /// This is an internal feature and it's not available for general use.
     ///
-    /// Prebidding feature is restricted for APS. Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
-    /// The adapter handles APS initialization and wrapped prebidding only when the managed prebidding flag is enabled.
+    /// Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
+    /// The adapter handles APS initialization and prebidding only when the managed prebidding flag is enabled.
     /// For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
     lazy var preBiddingManager = AmazonPublisherServicesAdapterPreBiddingManager(adapter: self)
 
@@ -61,12 +60,10 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     func setUp(with configuration: PartnerConfiguration, completion: @escaping (Error?) -> Void) {
         log(.setUpStarted)
 
-        // The adapter handles APS initialization only when the managed prebidding flag is enabled, for internal use only.
-        //
-        // Prebidding feature is restricted for APS. Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
-        // The adapter handles APS initialization and wrapped prebidding only when the managed prebidding flag is enabled.
+        // Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
+        // The adapter handles APS initialization and prebidding only when the managed prebidding flag is enabled.
         // For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
-        if configuration.useManagedPreBidding {
+        if configuration.useManagedPreBidding && Self.preBiddingDelegate == nil {
             // Initialize APS
             log("Using managed prebidding and setup")
             Self.preBiddingDelegate = preBiddingManager
@@ -102,10 +99,9 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         }
 
         // Start pre-bidding operation.
-        // The adapter handles APS pre-bidding only when the managed prebidding flag is enabled, for internal use only.
-        //
-        // Prebidding feature is restricted for APS. Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
-        // The adapter handles APS initialization and wrapped prebidding only when the managed prebidding flag is enabled.
+
+        // Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
+        // The adapter handles APS initialization and prebidding only when the managed prebidding flag is enabled.
         // For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
         let adapterRequest = AmazonPublisherServicesAdapterPreBidRequest(
             chartboostPlacement: request.chartboostPlacement,
