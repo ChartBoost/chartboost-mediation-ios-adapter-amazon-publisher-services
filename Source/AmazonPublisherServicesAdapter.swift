@@ -37,7 +37,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
     /// The adapter handles APS initialization and prebidding only when the managed prebidding flag is enabled.
     /// For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
-    lazy var preBiddingManager = AmazonPublisherServicesAdapterPreBiddingManager(adapter: self)
+    lazy var preBiddingManager = AmazonPublisherServicesAdapterPreBiddingManager()
 
     /// Bid payloads keyed by Chartboost placement.
     /// Holds the payloads obtained from pre-bidding operations, which are needed to load an ad.
@@ -67,7 +67,14 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             // Initialize APS
             log("Using managed prebidding and setup")
             Self.preBiddingDelegate = preBiddingManager
-            preBiddingManager.setUp(with: configuration, completion: completion)
+            preBiddingManager.setUp(with: configuration.credentials) { [weak self] error in
+                if let error = error {
+                    self?.log(.setUpFailed(error))
+                } else {
+                    self?.log(.setUpSucceded)
+                }
+                completion(error)
+            }
         } else {
             // Succeed immediately. The publisher is expected to manage APS initialization directly.
             log("Relying on publisher-side APS setup and prebidding integration")
@@ -212,7 +219,29 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             }
         }
     }
-    
+
+    /// Maps a partner setup error to a Chartboost Mediation error code.
+    /// Chartboost Mediation SDK calls this method when a setup completion is called with a partner error.
+    ///
+    /// A default implementation is provided that returns `nil`.
+    /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Chartboost Mediation's.
+    /// If some case cannot be mapped return `nil` to let Chartboost Mediation choose a default error code.
+    func mapSetUpError(_ error: Error) -> ChartboostMediationError.Code? {
+        // Map errors returned by the pre-bidding manager when managed pre-bidding is enabled.
+        // APS does not return setup errors itself.
+        guard let error = error as? AmazonPublisherServicesAdapterPreBiddingManager.SetUpError else {
+            return nil
+        }
+        switch error {
+        case .invalidCredentialsMissingAppID:
+            return .initializationFailureInvalidCredentials
+        case .invalidCredentialsMissingPrebids:
+            return .initializationFailureInvalidCredentials
+        case .timeout:
+            return .initializationFailureTimeout
+        }
+    }
+
     /// Maps a partner prebid error to a Chartboost Mediation error code.
     /// Chartboost Mediation SDK calls this method when a fetch bidder info completion is called with a partner error.
     ///
@@ -220,6 +249,17 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Chartboost Mediation's.
     /// If some case cannot be mapped return `nil` to let Chartboost Mediation choose a default error code.
     func mapPrebidError(_ error: Error) -> ChartboostMediationError.Code? {
+        // Try to map errors returned by the pre-bidding manager when managed pre-bidding is enabled.
+        if let error = error as? AmazonPublisherServicesAdapterPreBiddingManager.PreBidError {
+            switch error {
+            case .prebidderNotFound:
+                return .prebidFailureAdapterNotFound
+            case .loadAlreadyInProgress:
+                return .prebidFailureUnknown
+            }
+        }
+
+        // Otherwise map APS errors
         guard let errorCode = UInt32(exactly: (error as NSError).code) else {
             return nil
         }

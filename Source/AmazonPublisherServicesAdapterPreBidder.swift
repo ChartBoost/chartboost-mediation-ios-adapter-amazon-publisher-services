@@ -22,18 +22,14 @@ class AmazonPublisherServicesAdapterPreBidder {
     /// Prebid callback.
     private var prebidCallback: ((AmazonPublisherServicesAdapterPreBidResult) -> Void)? = nil
 
-    /// The partner adapter instance.
-    private var adapter: PartnerAdapter
-
     // MARK: - Initialization
     
     /// Initializes the pre-bidder.
-    init?(configuration: AmazonPublisherServicesAdapterPreBidder.Configuration, adapter: PartnerAdapter) {
+    init?(configuration: AmazonPublisherServicesAdapterPreBidder.Configuration) {
         // Generate the Amazon Ad Size object.
         guard let adSize = Self.amazonAdSize(from: configuration) else {
             return nil
         }
-        self.adapter = adapter
         // Generate the ad loader for the slot.
         loader = DTBAdLoader()
         loader.setAdSizes([adSize])
@@ -80,7 +76,7 @@ class AmazonPublisherServicesAdapterPreBidder {
     func fetchPrebiddingToken(completion: @escaping (AmazonPublisherServicesAdapterPreBidResult) -> Void) {
         // There is already a load in progress.
         guard isLoading == false else {
-            completion(.init(error: adapter.error(.prebidFailureUnknown, description: "Load already in progress")))
+            completion(.init(error: AmazonPublisherServicesAdapterPreBiddingManager.PreBidError.loadAlreadyInProgress))
             return
         }
         
@@ -101,7 +97,7 @@ extension AmazonPublisherServicesAdapterPreBidder: DTBAdCallback {
     func onFailure(_ error: DTBAdError) {
         // Clear the cache state
         isLoading = false
-        prebidCallback?(.init(error: adapter.partnerError(Int(error.rawValue))))
+        prebidCallback?(.init(error: NSError(domain: "com.chartboost.mediation.partner", code: Int(error.rawValue))))
         prebidCallback = nil
     }
     

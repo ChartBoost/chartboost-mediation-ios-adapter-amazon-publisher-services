@@ -13,7 +13,16 @@ import DTBiOSSDK
 /// For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
 final class AmazonPublisherServicesAdapterPreBiddingManager: AmazonPublisherServicesAdapterPreBiddingDelegate {
 
-    unowned private let adapter: AmazonPublisherServicesAdapter
+    enum SetUpError: String, Error {
+        case invalidCredentialsMissingAppID = "Missing 'application_id'"
+        case invalidCredentialsMissingPrebids = "Missing 'prebids'"
+        case timeout = "Failed to be ready within the expected timeframe of 250ms"
+    }
+
+    enum PreBidError: String, Error {
+        case prebidderNotFound = "Adapter prebidder instance not found"
+        case loadAlreadyInProgress = "Load already in progress"
+    }
 
     /// The CCPA value to use for all `AmazonPublisherServicesAdapterPreBidder` instances.
     /// - Note: Setting CCPA to `nil` will explicitly set CCPA to does not apply `"1---"`.
@@ -32,25 +41,17 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: AmazonPublisherServ
     /// Current set of bidders keyed by Chartboost placement.
     private var bidders: [String: AmazonPublisherServicesAdapterPreBidder] = [:]
 
-    init(adapter: AmazonPublisherServicesAdapter) {
-        self.adapter = adapter
-    }
-
     /// Initializes the APS SDK.
-    func setUp(with configuration: PartnerConfiguration, completion: @escaping (Error?) -> Void) {
+    func setUp(with credentials: [String: Any], completion: @escaping (Error?) -> Void) {
         // Extract credentials
-        guard let appID = configuration.appID, !appID.isEmpty else {
-            let error = adapter.error(.initializationFailureInvalidCredentials, description: "Missing \(String.appIDKey)")
-            adapter.log(.setUpFailed(error))
-            completion(error)
+        guard let appID = appID(from: credentials), !appID.isEmpty else {
+            completion(SetUpError.invalidCredentialsMissingAppID)
             return
         }
 
         // Extract the prebidding settings and initialize the prebidding controller.
-        guard let preBidderConfigurations = configuration.preBidderConfigurations, !preBidderConfigurations.isEmpty else {
-            let error = adapter.error(.initializationFailureInvalidCredentials, description: "Missing \(String.prebidsKey)")
-            adapter.log(.setUpFailed(error))
-            completion(error)
+        guard let preBidderConfigurations = preBidderConfigurations(from: credentials), !preBidderConfigurations.isEmpty else {
+            completion(SetUpError.invalidCredentialsMissingPrebids)
             return
         }
 
@@ -59,7 +60,7 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: AmazonPublisherServ
         bidders = preBidderConfigurations.reduce(into: [:]) { partialResult, bidderConfiguration in
 
             // Attempt to create a new bidder for the Chartboost Mediation placement
-            guard let bidder = AmazonPublisherServicesAdapterPreBidder(configuration: bidderConfiguration, adapter: self.adapter) else {
+            guard let bidder = AmazonPublisherServicesAdapterPreBidder(configuration: bidderConfiguration) else {
                 return
             }
 
@@ -89,12 +90,9 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: AmazonPublisherServ
                 return
             }
             if amazon.isReady {
-                self.adapter.log(.setUpSucceded)
                 completion(nil)
             } else {
-                let error = self.adapter.error(.initializationFailureTimeout, description: "Failed to be ready within the expected timeframe of 250ms")
-                self.adapter.log(.setUpFailed(error))
-                completion(error)
+                completion(SetUpError.timeout)
             }
         }
     }
@@ -104,22 +102,19 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: AmazonPublisherServ
 
         // Get the prebidder for the placement.
         guard let prebidder = bidders[request.chartboostPlacement] else {
-            let error = adapter.error(.prebidFailureAdapterNotFound, description: "Adapter prebidder instance not found")
-            completion(.init(error: error))
+            completion(.init(error: PreBidError.prebidderNotFound))
             return
         }
 
         // Have the prebidder load the ad.
         prebidder.fetchPrebiddingToken(completion: completion)
     }
-}
 
-/// Convenience extension to access APS credentials from the configuration.
-private extension PartnerConfiguration {
+    private func appID(from credentials: [String: Any]) -> String? {
+        credentials[.appIDKey] as? String
+    }
 
-    var appID: String? { credentials[.appIDKey] as? String }
-
-    var preBidderConfigurations: [AmazonPublisherServicesAdapterPreBidder.Configuration]? {
+    private func preBidderConfigurations(from credentials: [String: Any]) -> [AmazonPublisherServicesAdapterPreBidder.Configuration]? {
         guard let prebids = credentials[.prebidsKey] as? [[String: Any]] else {
             return nil
         }
