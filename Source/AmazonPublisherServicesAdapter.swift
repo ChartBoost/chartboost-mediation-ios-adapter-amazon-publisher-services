@@ -305,6 +305,7 @@ private extension String {
     static let managedPrebiddingKey = "managed_prebidding"
 }
 
+/// Convenience extension to access APS credentials from the configuration.
 private extension PartnerConfiguration {
 
     var appID: String? {
