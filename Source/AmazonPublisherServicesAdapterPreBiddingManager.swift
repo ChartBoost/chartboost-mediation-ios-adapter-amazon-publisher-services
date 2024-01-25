@@ -89,7 +89,8 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPub
                 return nil
             }
             fallthrough
-        case AdFormat.adaptiveBanner.rawValue:
+        // Not using the `.adaptiveBanner` case directly to maintain backward compatibility with Chartboost Mediation 4.0
+        case "adaptive_banner":
             // Banner format requires a non-0 width
             guard settings.width > 0 else {
                 return nil
