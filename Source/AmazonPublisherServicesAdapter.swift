@@ -32,9 +32,9 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
     static weak var preBiddingDelegate: AmazonPublisherServicesAdapterPreBiddingDelegate?
 
-    /// Info required by Amazon Publisher Services SDK to initialize and load ads, configured on the
-    /// Chartboost Mediation dashboard, and obtained on setup.
-    static private(set) var credentials: [String: Any] = [:]
+    /// Info required by Amazon Publisher Services SDK to load ads during pre-bidding, configured on the
+    /// Chartboost Mediation dashboard, and obtained on setup. Keyed by Mediation placement.
+    private var preBidSettings: [String: AmazonPublisherServicesAdapterPreBidRequest.AmazonSettings] = [:]
 
     /// Manages APS setup and pre-bidding when managed pre-bidding is enabled.
     ///
@@ -52,11 +52,6 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// immediately complete with an error.
     private(set) var isDisabledDueToCOPPA = false
 
-    /// Reads the credentials obtained on setup to find out if managed pre-bidding is enabled or not.
-    private var useManagedPreBidding: Bool {
-        Self.credentials[.managedPrebiddingKey] as? Bool ?? false
-    }
-
     /// The designated initializer for the adapter.
     /// Chartboost Mediation SDK will use this constructor to create instances of conforming types.
     /// - parameter storage: An object that exposes storage managed by the Chartboost Mediation SDK to the adapter.
@@ -69,18 +64,33 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     func setUp(with configuration: PartnerConfiguration, completion: @escaping (Error?) -> Void) {
         log(.setUpStarted)
 
-        /// Save and expose partner credentials so publishers can access them as needed for their
-        /// APS initialization and bid request integrations.
-        Self.credentials = configuration.credentials
+        // Extract the pre-bid settings needed later on on pre-bid operations.
+        preBidSettings = configuration.preBidSettings
+        guard !preBidSettings.isEmpty else {
+            let error = error(.initializationFailureInvalidCredentials, description: "Missing '\(String.prebidsKey)'")
+            log(.setUpFailed(error))
+            completion(error)
+            return
+        }
 
         // Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
         // The adapter handles APS initialization and prebidding only when the managed prebidding flag is enabled.
         // For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
-        if useManagedPreBidding && Self.preBiddingDelegate == nil {
-            // Initialize APS
+        if configuration.useManagedPreBidding && Self.preBiddingDelegate == nil {
+            // Use internal pre-bidding manager to initialize APS
             log("Using managed prebidding and setup")
+
+            // Extract credentials
+            guard let appID = configuration.appID, !appID.isEmpty else {
+                let error = error(.initializationFailureInvalidCredentials, description: "Missing '\(String.appIDKey)'")
+                log(.setUpFailed(error))
+                completion(error)
+                return
+            }
+
+            // Initialize APS
             Self.preBiddingDelegate = preBiddingManager
-            preBiddingManager.setUp(with: Self.credentials) { [weak self] error in
+            preBiddingManager.setUp(withAppID: appID) { [weak self] error in
                 if let error = error {
                     self?.log(.setUpFailed(error))
                 } else {
@@ -126,7 +136,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         let adapterRequest = AmazonPublisherServicesAdapterPreBidRequest(
             chartboostPlacement: request.chartboostPlacement,
             format: request.format.rawValue,
-            partnerSettings: preBidPartnerSettings(forPlacement: request.chartboostPlacement) ?? [:]
+            amazonSettings: preBidSettings[request.chartboostPlacement]
         )
         preBiddingDelegate.onPreBid(request: adapterRequest) { [weak self] result in
             guard let self else {
@@ -234,28 +244,6 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         }
     }
 
-    /// Maps a partner setup error to a Chartboost Mediation error code.
-    /// Chartboost Mediation SDK calls this method when a setup completion is called with a partner error.
-    ///
-    /// A default implementation is provided that returns `nil`.
-    /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Chartboost Mediation's.
-    /// If some case cannot be mapped return `nil` to let Chartboost Mediation choose a default error code.
-    func mapSetUpError(_ error: Error) -> ChartboostMediationError.Code? {
-        // Map errors returned by the pre-bidding manager when managed pre-bidding is enabled.
-        // APS does not return setup errors itself.
-        guard let error = error as? AmazonPublisherServicesAdapterPreBiddingManager.SetUpError else {
-            return nil
-        }
-        switch error {
-        case .invalidCredentialsMissingAppID:
-            return .initializationFailureInvalidCredentials
-        case .invalidCredentialsMissingPrebids:
-            return .initializationFailureInvalidCredentials
-        case .timeout:
-            return .initializationFailureTimeout
-        }
-    }
-
     /// Maps a partner prebid error to a Chartboost Mediation error code.
     /// Chartboost Mediation SDK calls this method when a fetch bidder info completion is called with a partner error.
     ///
@@ -263,17 +251,6 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// Only implement if the partner SDK provides its own list of error codes that can be mapped to Chartboost Mediation's.
     /// If some case cannot be mapped return `nil` to let Chartboost Mediation choose a default error code.
     func mapPrebidError(_ error: Error) -> ChartboostMediationError.Code? {
-        // Try to map errors returned by the pre-bidding manager when managed pre-bidding is enabled.
-        if let error = error as? AmazonPublisherServicesAdapterPreBiddingManager.PreBidError {
-            switch error {
-            case .prebidderNotFound:
-                return .prebidFailureAdapterNotFound
-            case .loadAlreadyInProgress:
-                return .prebidFailureUnknown
-            }
-        }
-
-        // Otherwise map APS errors
         guard let errorCode = UInt32(exactly: (error as NSError).code) else {
             return nil
         }
@@ -319,22 +296,35 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             return nil
         }
     }
-
-    /// Returns the partner settings associated to a given placement, by looking into the credentials obtained on setup.
-    private func preBidPartnerSettings(forPlacement placement: String) -> [String: Any]? {
-        guard let prebids = Self.credentials[.prebidsKey] as? [[String: Any]] else {
-            log("Failed to obtain prebids from partner credentials.")
-            return nil
-        }
-        return prebids.first(where: { $0["chartboost_placement"] as? String == placement })
-    }
 }
 
-extension String {
+private extension String {
     /// APS configuration keys
     static let appIDKey = "application_id"
     static let prebidsKey = "prebids"
     static let managedPrebiddingKey = "managed_prebidding"
+}
+
+private extension PartnerConfiguration {
+
+    var appID: String? {
+        credentials[.appIDKey] as? String
+    }
+
+    var preBidSettings: [String: AmazonPublisherServicesAdapterPreBidRequest.AmazonSettings] {
+        guard let prebids = credentials[.prebidsKey] as? [[String: Any]] else {
+            return [:]
+        }
+        return Dictionary(grouping: prebids) { prebid in
+            prebid["chartboost_placement"] as? String ?? prebid["helium_placement"] as? String ?? ""
+        }
+        .compactMapValues(\.first)
+        .compactMapValues(AmazonPublisherServicesAdapterPreBidRequest.AmazonSettings.init(dictionary:))
+    }
+
+    var useManagedPreBidding: Bool {
+        credentials[.managedPrebiddingKey] as? Bool ?? false
+    }
 }
 
 private extension DTBConsentStatus {
