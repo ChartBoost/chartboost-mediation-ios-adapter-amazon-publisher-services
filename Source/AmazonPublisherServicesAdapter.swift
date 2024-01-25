@@ -41,7 +41,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
     /// The adapter handles APS initialization and prebidding only when the managed prebidding flag is enabled.
     /// For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
-    lazy var preBiddingManager = AmazonPublisherServicesAdapterPreBiddingManager()
+    private lazy var preBiddingManager = AmazonPublisherServicesAdapterPreBiddingManager()
 
     /// Bid payloads keyed by Chartboost placement.
     /// Holds the payloads obtained from pre-bidding operations, which are needed to load an ad.
