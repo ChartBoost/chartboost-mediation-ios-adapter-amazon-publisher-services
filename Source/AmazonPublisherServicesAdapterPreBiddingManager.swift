@@ -30,7 +30,8 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPub
     private var preBidders: [String: PreBidder] = [:]
 
     /// Initializes the APS SDK.
-    func setUp(withAppID appID: String, completion: ((Error?) -> Void)?) {
+    /// - note: The use of @objc and an optional completion is required by some internal Chartboost tests.
+    @objc func setUp(withAppID appID: String, completion: ((Error?) -> Void)?) {
         // Initialize Amazon APS SDK.
         let amazon = DTBAds.sharedInstance()
         amazon.setAppKey(appID)
