@@ -12,7 +12,7 @@ import UIKit
 class AmazonPublisherServicesAdapterAd: NSObject {
     
     /// The partner adapter that created this ad.
-    let adapter: PartnerAdapter
+    var adapter: PartnerAdapter { amazonAdapter }
 
     /// The ad load request associated to the ad.
     /// It should be the one provided on `PartnerAdapter.makeAd(request:delegate:)`.
@@ -22,9 +22,12 @@ class AmazonPublisherServicesAdapterAd: NSObject {
     /// It should be the one provided on `PartnerAdapter.makeAd(request:delegate:)`.
     weak var delegate: PartnerAdDelegate?
 
-    /// Instance of the prebidding controller.
-    let prebiddingController: APSPreBiddingController
-        
+    /// The partner adapter with a concrete type which can be used by the ad to obtain consent info.
+    let amazonAdapter: AmazonPublisherServicesAdapter
+
+    /// Bid payload obtained from the pre-bidding operation, needed to load the ad.
+    let bidPayload: [AnyHashable: Any]?
+
     /// The completion handler to notify Chartboost Mediation of ad show completion result.
     var loadCompletion: ((Result<PartnerEventDetails, Error>) -> Void)?
 
@@ -35,11 +38,11 @@ class AmazonPublisherServicesAdapterAd: NSObject {
     /// - Parameters:
     ///   - adapter: The current adapter instance
     ///   - request: The current AdLoadRequest containing data relevant to the curent ad request
-    ///   - partnerAdDelegate: The partner ad delegate to notify Chartboost Mediation of ad lifecycle events.
-    init(adapter: PartnerAdapter, request: PartnerAdLoadRequest, delegate: PartnerAdDelegate, prebiddingController: APSPreBiddingController) {
-        self.adapter = adapter
+    ///   - bidPayload: Bid payload obtained from the pre-bidding operation, needed to load the ad.
+    init(adapter: AmazonPublisherServicesAdapter, request: PartnerAdLoadRequest, delegate: PartnerAdDelegate, bidPayload: [AnyHashable: Any]?) {
+        self.amazonAdapter = adapter
         self.request = request
         self.delegate = delegate
-        self.prebiddingController = prebiddingController
+        self.bidPayload = bidPayload
     }
 }

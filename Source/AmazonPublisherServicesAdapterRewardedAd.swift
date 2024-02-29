@@ -22,7 +22,7 @@ final class AmazonPublisherServicesAdapterRewardedAd: AmazonPublisherServicesAda
     /// - parameter completion: Closure to be performed once the ad has been loaded.
     func load(with viewController: UIViewController?, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
         log(.loadStarted)
-        guard !prebiddingController.isDisabledDueToCOPPA else {
+        guard !amazonAdapter.isDisabledDueToCOPPA else {
             let error = error(.loadFailurePrivacyOptIn, description: "Loading has been disabled due to COPPA restrictions")
             log(.loadFailed(error))
             completion(.failure(error))
@@ -30,7 +30,7 @@ final class AmazonPublisherServicesAdapterRewardedAd: AmazonPublisherServicesAda
         }
 
         // Validate that there is a bid payload available to fetch.
-        guard let mediationHints = prebiddingController.bidPayload(chartboostMediationPlacementName: request.chartboostPlacement) else {
+        guard let bidPayload else {
             let error = error(.loadFailureAuctionNoBid)
             log(.loadFailed(error))
             completion(.failure(error))
@@ -43,7 +43,7 @@ final class AmazonPublisherServicesAdapterRewardedAd: AmazonPublisherServicesAda
         DispatchQueue.main.async { [self] in
             // Fetch the creative from the mediation hints.
             let adLoader = DTBAdInterstitialDispatcher(delegate: self)
-            adLoader.fetchAd(withParameters: mediationHints)
+            adLoader.fetchAd(withParameters: bidPayload)
             self.adLoader = adLoader
         }
     }
@@ -54,7 +54,7 @@ final class AmazonPublisherServicesAdapterRewardedAd: AmazonPublisherServicesAda
     /// - parameter completion: Closure to be performed once the ad has been shown.
     func show(with viewController: UIViewController, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
         log(.showStarted)
-        guard !prebiddingController.isDisabledDueToCOPPA else {
+        guard !amazonAdapter.isDisabledDueToCOPPA else {
             let error = error(.showFailurePrivacyOptIn, description: "Showing has been disabled due to COPPA restrictions")
             log(.showFailed(error))
             completion(.failure(error))
