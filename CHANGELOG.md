@@ -4,10 +4,17 @@ Note the first digit of every adapter version corresponds to the major version o
 Adapters are compatible with any Chartboost Mediation SDK version within that major version.
 
 ### 4.4.8.0.1
+- Prevent `onPreBid(request:completion:)` delegate calls from being made for prebids without
+an associated APS placement.
 - This version of the adapter has been certified with AmazonPublisherServicesSDK 4.8.0.
 
 ### 4.4.8.0.0
 - This version of the adapter has been certified with AmazonPublisherServicesSDK 4.8.0.
+
+### 4.4.7.0.3
+- Prevent `onPreBid(request:completion:)` delegate calls from being made for prebids without
+an associated APS placement.
+- This version of the adapter has been certified with AmazonPublisherServicesSDK 4.7.0.
 
 ### 4.4.7.0.2
 - Chartboost is not permitted to wrap load or initialization calls for Amazon APS.
