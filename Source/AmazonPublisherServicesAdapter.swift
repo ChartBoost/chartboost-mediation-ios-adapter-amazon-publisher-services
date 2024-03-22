@@ -128,6 +128,14 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             return
         }
 
+        // Fail if the corresponding pre-bid info was not found in the credentials dictionary obtained on setup.
+        guard let amazonSettings = preBidSettings[request.chartboostPlacement] else {
+            let error = error(.prebidFailureUnknown, description: "Failed to find pre-bid settings for this placement")
+            log(.fetchBidderInfoFailed(request, error: error))
+            completion(nil)
+            return
+        }
+
         // Start pre-bidding operation.
 
         // Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
@@ -136,7 +144,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         let adapterRequest = AmazonPublisherServicesAdapterPreBidRequest(
             chartboostPlacement: request.chartboostPlacement,
             format: request.format.rawValue,
-            amazonSettings: preBidSettings[request.chartboostPlacement]
+            amazonSettings: amazonSettings
         )
         preBiddingDelegate.onPreBid(request: adapterRequest) { [weak self] result in
             guard let self else {

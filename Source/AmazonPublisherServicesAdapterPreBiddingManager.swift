@@ -19,7 +19,6 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPub
 
     enum PreBidError: String, Error {
         case invalidPrebidSettings = "Invalid pre-bid settings found for this placement"
-        case prebidSettingsNotFound = "Failed to find pre-bid settings for this placement"
         case loadAlreadyInProgress = "Pre-bid already in progress for this placement"
     }
 
@@ -57,15 +56,9 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPub
             return
         }
 
-        // Fail if the corresponding pre-bid info was not found in the credentials dictionary obtained on setup.
-        guard let amazonSettings = request.amazonSettings else {
-            completion(.init(error: PreBidError.prebidSettingsNotFound))
-            return
-        }
-        
         // Create the Amazon ad size object needed for the loader
         // Generate the Amazon Ad Size object.
-        guard let adSize = makeAmazonAdSize(format: request.format, settings: amazonSettings) else {
+        guard let adSize = makeAmazonAdSize(format: request.format, settings: request.amazonSettings) else {
             completion(.init(error: PreBidError.invalidPrebidSettings))
             return
         }
