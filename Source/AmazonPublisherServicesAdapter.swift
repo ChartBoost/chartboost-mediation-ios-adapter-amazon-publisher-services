@@ -17,7 +17,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// The version of the adapter.
     /// It should have either 5 or 6 digits separated by periods, where the first digit is Chartboost Mediation SDK's major version, the last digit is the adapter's build version, and intermediate digits are the partner SDK's version.
     /// Format: `<Chartboost Mediation major version>.<Partner major version>.<Partner minor version>.<Partner patch version>.<Partner build version>.<Adapter build version>` where `.<Partner build version>` is optional.
-    let adapterVersion = "4.4.9.0.0"
+    let adapterVersion = "4.4.9.0.1"
     
     /// The partner's unique identifier.
     let partnerIdentifier = "amazon_aps"
@@ -128,6 +128,14 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             return
         }
 
+        // Fail if the corresponding pre-bid info was not found in the credentials dictionary obtained on setup.
+        guard let amazonSettings = preBidSettings[request.chartboostPlacement] else {
+            let error = error(.prebidFailureUnknown, description: "Failed to find pre-bid settings for this placement")
+            log(.fetchBidderInfoFailed(request, error: error))
+            completion(nil)
+            return
+        }
+
         // Start pre-bidding operation.
 
         // Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
@@ -136,7 +144,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         let adapterRequest = AmazonPublisherServicesAdapterPreBidRequest(
             chartboostPlacement: request.chartboostPlacement,
             format: request.format.rawValue,
-            amazonSettings: preBidSettings[request.chartboostPlacement]
+            amazonSettings: amazonSettings
         )
         preBiddingDelegate.onPreBid(request: adapterRequest) { [weak self] result in
             guard let self else {

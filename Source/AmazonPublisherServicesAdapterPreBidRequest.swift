@@ -59,10 +59,10 @@ public final class AmazonPublisherServicesAdapterPreBidRequest: NSObject {
     public let format: String
     
     /// Amazon-specific info needed to load the APS ad.
-    public let amazonSettings: AmazonSettings?
+    public let amazonSettings: AmazonSettings
 
     /// Internal constructor.
-    init(chartboostPlacement: String, format: String, amazonSettings: AmazonSettings?) {
+    init(chartboostPlacement: String, format: String, amazonSettings: AmazonSettings) {
         self.chartboostPlacement = chartboostPlacement
         self.format = format
         self.amazonSettings = amazonSettings
