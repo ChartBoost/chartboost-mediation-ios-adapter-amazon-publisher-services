@@ -51,7 +51,7 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPub
     /// Handles a prebid operation.
     func onPreBid(request: AmazonPublisherServicesAdapterPreBidRequest, completion: @escaping (AmazonPublisherServicesAdapterPreBidResult) -> Void) {
         // Fail if a pre-bid is already ongoing for this placement.
-        guard preBidders[request.chartboostPlacement] == nil else {
+        guard preBidders[request.mediationPlacement] == nil else {
             completion(.init(error: PreBidError.loadAlreadyInProgress))
             return
         }
@@ -65,26 +65,25 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPub
 
         // Create pre-bidder and start loading
         let preBidder = PreBidder(adSize: adSize, ccpaPrivacyString: ccpaPrivacyString)
-        preBidders[request.chartboostPlacement] = preBidder   // hold on to the pre-bidder until it is done loading
+        preBidders[request.mediationPlacement] = preBidder   // hold on to the pre-bidder until it is done loading
         preBidder.load { [weak self] result in
-            self?.preBidders[request.chartboostPlacement] = nil  // discard it so another load can happen
+            self?.preBidders[request.mediationPlacement] = nil  // discard it so another load can happen
             completion(result)
         }
     }
 
     private func makeAmazonAdSize(
-        format: String,
+        format: PartnerAdFormat,
         settings: AmazonPublisherServicesAdapterPreBidRequest.AmazonSettings
     ) -> DTBAdSize? {
         switch format {
-        case AdFormat.banner.rawValue:
+        case PartnerAdFormats.banner:
             // Fixed banner format requires non-0 height
             guard settings.height > 0 else {
                 return nil
             }
             fallthrough
-        // Not using the `.adaptiveBanner` case directly to maintain backward compatibility with Chartboost Mediation 4.0
-        case "adaptive_banner":
+        case PartnerAdFormats.adaptiveBanner:
             // Banner format requires a non-0 width
             guard settings.width > 0 else {
                 return nil
@@ -103,13 +102,13 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPub
                     andSlotUUID: settings.partnerPlacement
                 )
             }
-        case AdFormat.interstitial.rawValue:
+        case PartnerAdFormats.interstitial:
             if settings.video {
                 return DTBAdSize(videoAdSizeWithSlotUUID: settings.partnerPlacement)
             } else {
                 return DTBAdSize(interstitialAdSizeWithSlotUUID: settings.partnerPlacement)
             }
-        case AdFormat.rewarded.rawValue:
+        case PartnerAdFormats.rewarded:
             // Currently, all rewarded ads from APS are video
             return DTBAdSize(
                 videoAdSizeWithPlayerWidth: Int(DTB_VIDEO_WIDTH),

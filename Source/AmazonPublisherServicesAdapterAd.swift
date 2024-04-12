@@ -14,6 +14,9 @@ class AmazonPublisherServicesAdapterAd: NSObject {
     /// The partner adapter that created this ad.
     var adapter: PartnerAdapter { amazonAdapter }
 
+    /// Extra ad information provided by the partner.
+    var details: PartnerDetails = [:]
+
     /// The ad load request associated to the ad.
     /// It should be the one provided on `PartnerAdapter.makeAd(request:delegate:)`.
     let request: PartnerAdLoadRequest
@@ -29,10 +32,10 @@ class AmazonPublisherServicesAdapterAd: NSObject {
     let bidPayload: [AnyHashable: Any]?
 
     /// The completion handler to notify Chartboost Mediation of ad show completion result.
-    var loadCompletion: ((Result<PartnerEventDetails, Error>) -> Void)?
+    var loadCompletion: ((Result<PartnerDetails, Error>) -> Void)?
 
     /// The completion handler to notify Chartboost Mediation of ad load completion result.
-    var showCompletion: ((Result<PartnerEventDetails, Error>) -> Void)?
+    var showCompletion: ((Result<PartnerDetails, Error>) -> Void)?
 
     /// Create a new instance of the adapter.
     /// - Parameters:
