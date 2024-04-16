@@ -3,6 +3,7 @@
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
+import ChartboostMediationSDK
 import Foundation
 
 /// A request model containing the info to be used by publishers to load an APS ad during pre-bidding.
@@ -52,18 +53,18 @@ public final class AmazonPublisherServicesAdapterPreBidRequest: NSObject {
     }
 
     /// Chartboost Mediation's placement identifier.
-    public let chartboostPlacement: String
+    public let mediationPlacement: String
 
     /// Ad format.
-    /// Refer to the raw values of Chartboost Mediation' AdFormat enum for possible values.
-    public let format: String
-    
+    /// Refer to the constants defined in PartnerAdFormats for possible values.
+    public let format: PartnerAdFormat
+
     /// Amazon-specific info needed to load the APS ad.
     public let amazonSettings: AmazonSettings
 
     /// Internal constructor.
-    init(chartboostPlacement: String, format: String, amazonSettings: AmazonSettings) {
-        self.chartboostPlacement = chartboostPlacement
+    init(mediationPlacement: String, format: String, amazonSettings: AmazonSettings) {
+        self.mediationPlacement = mediationPlacement
         self.format = format
         self.amazonSettings = amazonSettings
     }

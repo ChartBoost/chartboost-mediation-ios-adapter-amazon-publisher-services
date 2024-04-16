@@ -20,7 +20,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     let adapterVersion = "4.4.9.0.1"
     
     /// The partner's unique identifier.
-    let partnerIdentifier = "amazon_aps"
+    let partnerID = "amazon_aps"
     
     /// The human-friendly partner name.
     let partnerDisplayName = "Amazon Publisher Services"
@@ -61,7 +61,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// Does any setup needed before beginning to load ads.
     /// - parameter configuration: Configuration data for the adapter to set up.
     /// - parameter completion: Closure to be performed by the adapter when it's done setting up. It should include an error indicating the cause for failure or `nil` if the operation finished successfully.
-    func setUp(with configuration: PartnerConfiguration, completion: @escaping (Error?) -> Void) {
+    func setUp(with configuration: PartnerConfiguration, completion: @escaping (Result<PartnerDetails, Error>) -> Void) {
         log(.setUpStarted)
 
         // Extract the pre-bid settings needed later on on pre-bid operations.
@@ -69,7 +69,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         guard !preBidSettings.isEmpty else {
             let error = error(.initializationFailureInvalidCredentials, description: "Missing '\(String.prebidsKey)'")
             log(.setUpFailed(error))
-            completion(error)
+            completion(.failure(error))
             return
         }
 
@@ -84,7 +84,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             guard let appID = configuration.appID, !appID.isEmpty else {
                 let error = error(.initializationFailureInvalidCredentials, description: "Missing '\(String.appIDKey)'")
                 log(.setUpFailed(error))
-                completion(error)
+                completion(.failure(error))
                 return
             }
 
@@ -93,30 +93,31 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             preBiddingManager.setUp(withAppID: appID) { [weak self] error in
                 if let error = error {
                     self?.log(.setUpFailed(error))
+                    completion(.failure(error))
                 } else {
                     self?.log(.setUpSucceded)
+                    completion(.success([:]))
                 }
-                completion(error)
             }
         } else {
             // Succeed immediately. The publisher is expected to manage APS initialization directly.
             log("Relying on publisher-side APS setup and prebidding integration")
             log(.setUpSucceded)
-            completion(nil)
+            completion(.success([:]))
         }
     }
     
     /// Fetches bidding tokens needed for the partner to participate in an auction.
     /// - parameter request: Information about the ad load request.
     /// - parameter completion: Closure to be performed with the fetched info.
-    func fetchBidderInformation(request: PreBidRequest, completion: @escaping ([String : String]?) -> Void) {
+    func fetchBidderInformation(request: PartnerAdPreBidRequest, completion: @escaping (Result<[String : String], Error>) -> Void) {
         log(.fetchBidderInfoStarted(request))
 
         // Disable bidding for underage users
         guard !isDisabledDueToCOPPA else {
             let error = error(.prebidFailureUnknown, description: "Bidder info fetch has been disabled due to COPPA restrictions")
             log(.fetchBidderInfoFailed(request, error: error))
-            completion(nil)
+            completion(.failure(error))
             return
         }
 
@@ -124,15 +125,15 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         guard let preBiddingDelegate = Self.preBiddingDelegate else {
             let error = error(.prebidFailurePartnerNotIntegrated, description: "Prebidding delegate not set by publisher.")
             log(.fetchBidderInfoFailed(request, error: error))
-            completion(nil)
+            completion(.failure(error))
             return
         }
 
         // Fail if the corresponding pre-bid info was not found in the credentials dictionary obtained on setup.
-        guard let amazonSettings = preBidSettings[request.chartboostPlacement] else {
+        guard let amazonSettings = preBidSettings[request.mediationPlacement] else {
             let error = error(.prebidFailureUnknown, description: "Failed to find pre-bid settings for this placement")
             log(.fetchBidderInfoFailed(request, error: error))
-            completion(nil)
+            completion(.failure(error))
             return
         }
 
@@ -142,8 +143,8 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         // The adapter handles APS initialization and prebidding only when the managed prebidding flag is enabled.
         // For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
         let adapterRequest = AmazonPublisherServicesAdapterPreBidRequest(
-            chartboostPlacement: request.chartboostPlacement,
-            format: request.format.rawValue,
+            mediationPlacement: request.mediationPlacement,
+            format: request.format,
             amazonSettings: amazonSettings
         )
         preBiddingDelegate.onPreBid(request: adapterRequest) { [weak self] result in
@@ -153,13 +154,13 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             if let adInfo = result.adInfo {
                 // Success: save the bid payload to use later on load, return the price point.
                 self.log(.fetchBidderInfoSucceeded(request))
-                self.bidPayloads[request.chartboostPlacement] = adInfo.bidPayload
-                completion([request.chartboostPlacement: adInfo.pricePoint])
+                self.bidPayloads[request.mediationPlacement] = adInfo.bidPayload
+                completion(.success([request.mediationPlacement: adInfo.pricePoint]))
             } else {
                 // Failure
                 let error = result.error ?? self.error(.prebidFailureUnknown)
                 self.log(.fetchBidderInfoFailed(request, error: error))
-                completion(nil)
+                completion(.failure(error))
             }
         }
     }
@@ -231,24 +232,19 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// - parameter delegate: The delegate that will receive ad life-cycle notifications.
     func makeAd(request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) throws -> PartnerAd {
         // First pop the bid payload for the requested placement, previously obtained during pre-bidding.
-        let bidPayload = bidPayloads[request.chartboostPlacement]
-        bidPayloads[request.chartboostPlacement] = nil
+        let bidPayload = bidPayloads[request.mediationPlacement]
+        bidPayloads[request.mediationPlacement] = nil
 
         // This partner supports multiple loads for the same partner placement.
         switch request.format {
-        case .interstitial:
+        case PartnerAdFormats.interstitial:
             return AmazonPublisherServicesAdapterInterstitialAd(adapter: self, request: request, delegate: delegate, bidPayload: bidPayload)
-        case .banner:
+        case PartnerAdFormats.banner, PartnerAdFormats.adaptiveBanner:
             return AmazonPublisherServicesAdapterBannerAd(adapter: self, request: request, delegate: delegate, bidPayload: bidPayload)
-        case .rewarded:
+        case PartnerAdFormats.rewarded:
             return AmazonPublisherServicesAdapterRewardedAd(adapter: self, request: request, delegate: delegate, bidPayload: bidPayload)
         default:
-            // Not using the `.adaptiveBanner` case directly to maintain backward compatibility with Chartboost Mediation 4.0
-            if request.format.rawValue == "adaptive_banner" {
-                return AmazonPublisherServicesAdapterBannerAd(adapter: self, request: request, delegate: delegate, bidPayload: bidPayload)
-            } else {
-                throw error(.loadFailureUnsupportedAdFormat)
-            }
+            throw error(.loadFailureUnsupportedAdFormat)
         }
     }
 

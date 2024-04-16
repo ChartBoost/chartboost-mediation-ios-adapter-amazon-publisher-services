@@ -14,13 +14,17 @@ final class AmazonPublisherServicesAdapterBannerAd: AmazonPublisherServicesAdapt
     /// Should be nil for full-screen ads.
     var inlineView: UIView?
     
+    /// The loaded partner ad banner size.
+    /// Should be `nil` for full-screen ads.
+    var bannerSize: PartnerBannerSize?
+
     /// The APS ad dispatcher instance used to load an ad. We have strong reference here to keep it alive while the loading is ongoing.
     private var adLoader: DTBAdBannerDispatcher?
     
     /// Loads an ad.
     /// - parameter viewController: The view controller on which the ad will be presented on. Needed on load for some banners.
     /// - parameter completion: Closure to be performed once the ad has been loaded.
-    func load(with viewController: UIViewController?, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
+    func load(with viewController: UIViewController?, completion: @escaping (Result<PartnerDetails, Error>) -> Void) {
         log(.loadStarted)
         guard !amazonAdapter.isDisabledDueToCOPPA else {
             let error = error(.loadFailurePrivacyOptIn, description: "Loading has been disabled due to COPPA restrictions")
@@ -44,6 +48,7 @@ final class AmazonPublisherServicesAdapterBannerAd: AmazonPublisherServicesAdapt
             return completion(.failure(error))
         }
         
+        bannerSize = PartnerBannerSize(size: size, type: .fixed)
         loadCompletion = completion
 
         // APS banners make use of UI-related APIs directly from the thread fectchBannerAd() is called, so we need to do it on the main thread
@@ -61,7 +66,7 @@ final class AmazonPublisherServicesAdapterBannerAd: AmazonPublisherServicesAdapt
     /// It will never get called for banner ads. You may leave the implementation blank for that ad format.
     /// - parameter viewController: The view controller on which the ad will be presented on.
     /// - parameter completion: Closure to be performed once the ad has been shown.
-    func show(with viewController: UIViewController, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
+    func show(with viewController: UIViewController, completion: @escaping (Result<PartnerDetails, Error>) -> Void) {
         // no-op
     }
 }
@@ -71,14 +76,7 @@ extension AmazonPublisherServicesAdapterBannerAd: DTBAdBannerDispatcherDelegate 
     func adDidLoad(_ adView: UIView) {
         log(.loadSucceeded)
         inlineView = adView
-
-        var partnerDetails: [String: String] = [:]
-        if let loadedSize = fixedBannerSize(for: request.size ?? IABStandardAdSize) {
-            partnerDetails["bannerWidth"] = "\(loadedSize.width)"
-            partnerDetails["bannerHeight"] = "\(loadedSize.height)"
-            partnerDetails["bannerType"] = "0" // Fixed banner
-        }
-        loadCompletion?(.success(partnerDetails)) ?? log(.loadResultIgnored)
+        loadCompletion?(.success([:])) ?? log(.loadResultIgnored)
         loadCompletion = nil
     }
 
