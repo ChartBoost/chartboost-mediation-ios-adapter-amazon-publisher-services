@@ -59,13 +59,17 @@ public final class AmazonPublisherServicesAdapterPreBidRequest: NSObject {
     /// Refer to the constants defined in PartnerAdFormats for possible values.
     public let format: PartnerAdFormat
 
+    /// Ad size. `nil` for full-screen ads.
+    public let bannerSize: BannerSize?
+
     /// Amazon-specific info needed to load the APS ad.
     public let amazonSettings: AmazonSettings
 
     /// Internal constructor.
-    init(mediationPlacement: String, format: String, amazonSettings: AmazonSettings) {
+    init(mediationPlacement: String, format: String, bannerSize: BannerSize?, amazonSettings: AmazonSettings) {
         self.mediationPlacement = mediationPlacement
         self.format = format
+        self.bannerSize = bannerSize
         self.amazonSettings = amazonSettings
     }
 }

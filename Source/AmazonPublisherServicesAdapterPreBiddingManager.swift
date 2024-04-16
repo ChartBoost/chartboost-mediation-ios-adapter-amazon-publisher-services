@@ -58,7 +58,7 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPub
 
         // Create the Amazon ad size object needed for the loader
         // Generate the Amazon Ad Size object.
-        guard let adSize = makeAmazonAdSize(format: request.format, settings: request.amazonSettings) else {
+        guard let adSize = makeAmazonAdSize(request: request) else {
             completion(.init(error: PreBidError.invalidPrebidSettings))
             return
         }
@@ -72,18 +72,14 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPub
         }
     }
 
-    private func makeAmazonAdSize(
-        format: PartnerAdFormat,
-        settings: AmazonPublisherServicesAdapterPreBidRequest.AmazonSettings
-    ) -> DTBAdSize? {
-        switch format {
+    private func makeAmazonAdSize(request: AmazonPublisherServicesAdapterPreBidRequest) -> DTBAdSize? {
+        let settings = request.amazonSettings
+        switch request.format {
         case PartnerAdFormats.banner:
             // Fixed banner format requires non-0 height
-            guard settings.height > 0 else {
+            guard request.bannerSize?.type != .fixed || settings.height > 0 else {
                 return nil
             }
-            fallthrough
-        case PartnerAdFormats.adaptiveBanner:
             // Banner format requires a non-0 width
             guard settings.width > 0 else {
                 return nil
