@@ -145,6 +145,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         let adapterRequest = AmazonPublisherServicesAdapterPreBidRequest(
             mediationPlacement: request.mediationPlacement,
             format: request.format,
+            bannerSize: request.bannerSize,
             amazonSettings: amazonSettings
         )
         preBiddingDelegate.onPreBid(request: adapterRequest) { [weak self] result in
@@ -239,7 +240,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         switch request.format {
         case PartnerAdFormats.interstitial:
             return AmazonPublisherServicesAdapterInterstitialAd(adapter: self, request: request, delegate: delegate, bidPayload: bidPayload)
-        case PartnerAdFormats.banner, PartnerAdFormats.adaptiveBanner:
+        case PartnerAdFormats.banner:
             return AmazonPublisherServicesAdapterBannerAd(adapter: self, request: request, delegate: delegate, bidPayload: bidPayload)
         case PartnerAdFormats.rewarded:
             return AmazonPublisherServicesAdapterRewardedAd(adapter: self, request: request, delegate: delegate, bidPayload: bidPayload)
