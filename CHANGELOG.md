@@ -3,6 +3,11 @@
 Note the first digit of every adapter version corresponds to the major version of the Chartboost Mediation SDK compatible with that adapter. 
 Adapters are compatible with any Chartboost Mediation SDK version within that major version.
 
+### 5.4.9.0.1
+- The minimum deployment target compatible with this adapter is now iOS 13.
+- This version of the adapter has been certified with ChartboostMediationSDK 5.0.0.
+- This version of the adapter has been certified with AmazonPublisherServicesSDK 4.9.0.
+
 ### 4.4.9.0.1
 - Prevent `onPreBid(request:completion:)` delegate calls from being made for prebids without
 an associated APS placement.
