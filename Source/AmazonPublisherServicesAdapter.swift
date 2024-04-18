@@ -145,6 +145,7 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         let adapterRequest = AmazonPublisherServicesAdapterPreBidRequest(
             mediationPlacement: request.mediationPlacement,
             format: request.format,
+            bannerSize: request.bannerSize,
             amazonSettings: amazonSettings
         )
         preBiddingDelegate.onPreBid(request: adapterRequest) { [weak self] result in
