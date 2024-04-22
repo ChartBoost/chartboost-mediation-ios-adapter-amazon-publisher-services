@@ -224,14 +224,33 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         log(.privacyUpdated(setting: "ccpaValue", value: privacyString))
     }
     
+    /// Creates a new banner ad object in charge of communicating with a single partner SDK ad instance.
+    /// Chartboost Mediation SDK calls this method to create a new ad for each new load request. Ad instances are never reused.
+    /// Chartboost Mediation SDK takes care of storing and disposing of ad instances so you don't need to.
+    /// ``PartnerAd/invalidate()`` is called on ads before disposing of them in case partners need to perform any custom logic before the
+    /// object gets destroyed.
+    /// If, for some reason, a new ad cannot be provided, an error should be thrown.
+    /// Chartboost Mediation SDK will always call this method from the main thread.
+    /// - parameter request: Information about the ad load request.
+    /// - parameter delegate: The delegate that will receive ad life-cycle notifications.
+    func makeBannerAd(request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) throws -> PartnerBannerAd {
+        // First pop the bid payload for the requested placement, previously obtained during pre-bidding.
+        let bidPayload = bidPayloads[request.mediationPlacement]
+        bidPayloads[request.mediationPlacement] = nil
+
+        // This partner supports multiple loads for the same partner placement.
+        return AmazonPublisherServicesAdapterBannerAd(adapter: self, request: request, delegate: delegate, bidPayload: bidPayload)
+    }
+
     /// Creates a new ad object in charge of communicating with a single partner SDK ad instance.
     /// Chartboost Mediation SDK calls this method to create a new ad for each new load request. Ad instances are never reused.
     /// Chartboost Mediation SDK takes care of storing and disposing of ad instances so you don't need to.
-    /// `invalidate()` is called on ads before disposing of them in case partners need to perform any custom logic before the object gets destroyed.
+    /// ``PartnerAd/invalidate()`` is called on ads before disposing of them in case partners need to perform any custom logic before the
+    /// object gets destroyed.
     /// If, for some reason, a new ad cannot be provided, an error should be thrown.
     /// - parameter request: Information about the ad load request.
     /// - parameter delegate: The delegate that will receive ad life-cycle notifications.
-    func makeAd(request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) throws -> PartnerAd {
+    func makeFullscreenAd(request: PartnerAdLoadRequest, delegate: PartnerAdDelegate) throws -> PartnerFullscreenAd {
         // First pop the bid payload for the requested placement, previously obtained during pre-bidding.
         let bidPayload = bidPayloads[request.mediationPlacement]
         bidPayloads[request.mediationPlacement] = nil
@@ -240,8 +259,6 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
         switch request.format {
         case PartnerAdFormats.interstitial:
             return AmazonPublisherServicesAdapterInterstitialAd(adapter: self, request: request, delegate: delegate, bidPayload: bidPayload)
-        case PartnerAdFormats.banner:
-            return AmazonPublisherServicesAdapterBannerAd(adapter: self, request: request, delegate: delegate, bidPayload: bidPayload)
         case PartnerAdFormats.rewarded:
             return AmazonPublisherServicesAdapterRewardedAd(adapter: self, request: request, delegate: delegate, bidPayload: bidPayload)
         default:
