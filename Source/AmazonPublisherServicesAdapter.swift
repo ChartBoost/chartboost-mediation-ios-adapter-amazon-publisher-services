@@ -73,6 +73,10 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
             return
         }
 
+        // Apply initial consents
+        setConsents(configuration.consents, modifiedKeys: Set(configuration.consents.keys))
+        setIsUserUnderage(configuration.isUserUnderage)
+
         // Chartboost is not permitted to wrap the Amazon APS initialization or bid request methods directly.
         // The adapter handles APS initialization and prebidding only when the managed prebidding flag is enabled.
         // For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
