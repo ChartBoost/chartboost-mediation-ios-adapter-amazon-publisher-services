@@ -10,20 +10,20 @@ import os.log
 @objc public class AmazonPublisherServicesAdapterConfiguration: NSObject {
     
     /// The version of the partner SDK.
-    @objc static var partnerSDKVersion: String {
+    @objc public static var partnerSDKVersion: String {
         APS.version()
     }
 
     /// The version of the adapter.
     /// It should have either 5 or 6 digits separated by periods, where the first digit is Chartboost Mediation SDK's major version, the last digit is the adapter's build version, and intermediate digits are the partner SDK's version.
     /// Format: `<Chartboost Mediation major version>.<Partner major version>.<Partner minor version>.<Partner patch version>.<Partner build version>.<Adapter build version>` where `.<Partner build version>` is optional.
-    @objc static let adapterVersion = "4.4.9.0.1"
+    @objc public static let adapterVersion = "4.4.9.0.1"
 
     /// The partner's unique identifier.
-    @objc static let partnerID = "amazon_aps"
+    @objc public static let partnerID = "amazon_aps"
 
     /// The human-friendly partner name.
-    @objc static let partnerDisplayName = "Amazon Publisher Services"
+    @objc public static let partnerDisplayName = "Amazon Publisher Services"
 
     private static let log = OSLog(subsystem: "com.chartboost.mediation.adapter.amazon_aps", category: "Configuration")
 
