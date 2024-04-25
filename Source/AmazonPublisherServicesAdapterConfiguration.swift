@@ -29,12 +29,13 @@ import os.log
 
     /// Flag that can optionally be set to enable the partner's test mode.
     /// Disabled by default.
-    @objc public static var testMode: Bool = false {
-        didSet {
-            DTBAds.sharedInstance().testMode = testMode
-            if #available(iOS 12.0, *) {
-                os_log(.debug, log: log, "Amazon Publishing Services SDK test mode set to %{public}s", "\(testMode)")
-            }
+    @objc public static var testMode: Bool {
+        get {
+            DTBAds.sharedInstance().testMode
+        }
+        set {
+            DTBAds.sharedInstance().testMode = newValue
+            os_log(.debug, log: log, "Amazon Publishing Services SDK test mode set to %{public}s", "\(testMode)")
         }
     }
     
@@ -43,9 +44,7 @@ import os.log
     @objc public static var verboseLogging: Bool = false {
         didSet {
             DTBAds.sharedInstance().setLogLevel(DTBLogLevelAll)
-            if #available(iOS 12.0, *) {
-                os_log(.debug, log: log, "Amazon Publishing Services SDK verbose logging set to %{public}s", "\(verboseLogging)")
-            }
+            os_log(.debug, log: log, "Amazon Publishing Services SDK verbose logging set to %{public}s", "\(verboseLogging)")
         }
     }
 
