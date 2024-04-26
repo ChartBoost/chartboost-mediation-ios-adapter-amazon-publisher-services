@@ -9,16 +9,33 @@ import os.log
 /// A list of externally configurable properties pertaining to the partner SDK that can be retrieved and set by publishers.
 @objc public class AmazonPublisherServicesAdapterConfiguration: NSObject {
     
+    /// The version of the partner SDK.
+    @objc public static var partnerSDKVersion: String {
+        APS.version()
+    }
+
+    /// The version of the adapter.
+    /// It should have either 5 or 6 digits separated by periods, where the first digit is Chartboost Mediation SDK's major version, the last digit is the adapter's build version, and intermediate digits are the partner SDK's version.
+    /// Format: `<Chartboost Mediation major version>.<Partner major version>.<Partner minor version>.<Partner patch version>.<Partner build version>.<Adapter build version>` where `.<Partner build version>` is optional.
+    @objc public static let adapterVersion = "4.4.9.0.1"
+
+    /// The partner's unique identifier.
+    @objc public static let partnerID = "amazon_aps"
+
+    /// The human-friendly partner name.
+    @objc public static let partnerDisplayName = "Amazon Publisher Services"
+
     private static let log = OSLog(subsystem: "com.chartboost.mediation.adapter.amazon_aps", category: "Configuration")
 
     /// Flag that can optionally be set to enable the partner's test mode.
     /// Disabled by default.
-    @objc public static var testMode: Bool = false {
-        didSet {
-            DTBAds.sharedInstance().testMode = testMode
-            if #available(iOS 12.0, *) {
-                os_log(.debug, log: log, "Amazon Publishing Services SDK test mode set to %{public}s", "\(testMode)")
-            }
+    @objc public static var testMode: Bool {
+        get {
+            DTBAds.sharedInstance().testMode
+        }
+        set {
+            DTBAds.sharedInstance().testMode = newValue
+            os_log(.debug, log: log, "Amazon Publishing Services SDK test mode set to %{public}s", "\(testMode)")
         }
     }
     
@@ -27,9 +44,7 @@ import os.log
     @objc public static var verboseLogging: Bool = false {
         didSet {
             DTBAds.sharedInstance().setLogLevel(DTBLogLevelAll)
-            if #available(iOS 12.0, *) {
-                os_log(.debug, log: log, "Amazon Publishing Services SDK verbose logging set to %{public}s", "\(verboseLogging)")
-            }
+            os_log(.debug, log: log, "Amazon Publishing Services SDK verbose logging set to %{public}s", "\(verboseLogging)")
         }
     }
 

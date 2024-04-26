@@ -12,18 +12,26 @@ import UIKit
 final class AmazonPublisherServicesAdapter: PartnerAdapter {
     
     /// The version of the partner SDK.
-    var partnerSDKVersion: String { APS.version() }
+    var partnerSDKVersion: String {
+        AmazonPublisherServicesAdapterConfiguration.partnerSDKVersion
+    }
 
     /// The version of the adapter.
     /// It should have either 5 or 6 digits separated by periods, where the first digit is Chartboost Mediation SDK's major version, the last digit is the adapter's build version, and intermediate digits are the partner SDK's version.
     /// Format: `<Chartboost Mediation major version>.<Partner major version>.<Partner minor version>.<Partner patch version>.<Partner build version>.<Adapter build version>` where `.<Partner build version>` is optional.
-    let adapterVersion = "4.4.9.0.1"
-    
+    var adapterVersion: String {
+        AmazonPublisherServicesAdapterConfiguration.adapterVersion
+    }
+
     /// The partner's unique identifier.
-    let partnerID = "amazon_aps"
-    
+    var partnerID: String {
+        AmazonPublisherServicesAdapterConfiguration.partnerID
+    }
+
     /// The human-friendly partner name.
-    let partnerDisplayName = "Amazon Publisher Services"
+    var partnerDisplayName: String {
+        AmazonPublisherServicesAdapterConfiguration.partnerDisplayName
+    }
 
     /// A delegate that performs pre-bidding operations by integrating directly with the Amazon Publisher Services SDK.
     ///
