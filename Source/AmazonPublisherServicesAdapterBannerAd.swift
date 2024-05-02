@@ -40,7 +40,8 @@ final class AmazonPublisherServicesAdapterBannerAd: AmazonPublisherServicesAdapt
         }
 
         // Fail if we cannot fit a fixed size banner in the requested size.
-        guard let loadedSize = fixedBannerSize(for: request.bannerSize) else {
+        guard let requestedSize = request.bannerSize,
+              let loadedSize = BannerSize.largestStandardFixedSizeThatFits(in: requestedSize)?.size else {
             let error = error(.loadFailureInvalidBannerSize)
             log(.loadFailed(error))
             return completion(.failure(error))
@@ -89,25 +90,5 @@ extension AmazonPublisherServicesAdapterBannerAd: DTBAdBannerDispatcherDelegate 
     func impressionFired() {
         log(.didTrackImpression)
         delegate?.didTrackImpression(self, details: [:]) ?? log(.delegateUnavailable)
-    }
-}
-
-// MARK: - Helpers
-extension AmazonPublisherServicesAdapterBannerAd {
-    private func fixedBannerSize(for requestedSize: BannerSize?) -> CGSize? {
-        guard let requestedSize else {
-            return IABStandardAdSize
-        }
-        let sizes = [IABLeaderboardAdSize, IABMediumAdSize, IABStandardAdSize]
-        // Find the largest size that can fit in the requested size.
-        for size in sizes {
-            // If height is 0, the pub has requested an ad of any height, so only the width matters.
-            if requestedSize.size.width >= size.width &&
-                (size.height == 0 || requestedSize.size.height >= size.height) {
-                return size
-            }
-        }
-        // The requested size cannot fit any fixed size banners.
-        return nil
     }
 }
