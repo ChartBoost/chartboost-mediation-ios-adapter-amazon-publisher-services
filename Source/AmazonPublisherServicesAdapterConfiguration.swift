@@ -3,12 +3,12 @@
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
+import ChartboostMediationSDK
 import DTBiOSSDK
-import os.log
 
 /// A list of externally configurable properties pertaining to the partner SDK that can be retrieved and set by publishers.
-@objc public class AmazonPublisherServicesAdapterConfiguration: NSObject {
-    
+@objc public class AmazonPublisherServicesAdapterConfiguration: NSObject, PartnerAdapterConfiguration {
+
     /// The version of the partner SDK.
     @objc public static var partnerSDKVersion: String {
         APS.version()
@@ -25,8 +25,6 @@ import os.log
     /// The human-friendly partner name.
     @objc public static let partnerDisplayName = "Amazon Publisher Services"
 
-    private static let log = OSLog(subsystem: "com.chartboost.mediation.adapter.amazon_aps", category: "Configuration")
-
     /// Flag that can optionally be set to enable the partner's test mode.
     /// Disabled by default.
     @objc public static var testMode: Bool {
@@ -35,7 +33,7 @@ import os.log
         }
         set {
             DTBAds.sharedInstance().testMode = newValue
-            os_log(.debug, log: log, "Amazon Publishing Services SDK test mode set to %{public}s", "\(testMode)")
+            log("Test mode set to \(testMode)")
         }
     }
     
@@ -44,7 +42,7 @@ import os.log
     @objc public static var verboseLogging: Bool = false {
         didSet {
             DTBAds.sharedInstance().setLogLevel(DTBLogLevelAll)
-            os_log(.debug, log: log, "Amazon Publishing Services SDK verbose logging set to %{public}s", "\(verboseLogging)")
+            log("Verbose logging set to \(verboseLogging)")
         }
     }
 
