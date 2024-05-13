@@ -64,7 +64,7 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPub
         }
 
         // Create pre-bidder and start loading
-        let preBidder = PreBidder(adSize: adSize, ccpaPrivacyString: ccpaPrivacyString)
+        let preBidder = PreBidder(adSize: adSize, ccpaPrivacyString: ccpaPrivacyString, keywords: request.keywords)
         preBidders[request.mediationPlacement] = preBidder   // hold on to the pre-bidder until it is done loading
         preBidder.load { [weak self] result in
             self?.preBidders[request.mediationPlacement] = nil  // discard it so another load can happen
@@ -127,11 +127,14 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPub
         private var completion: ((AmazonPublisherServicesAdapterPreBidResult) -> Void)? = nil
 
         /// Initializes the pre-bidder.
-        init(adSize: DTBAdSize, ccpaPrivacyString: String?) {
+        init(adSize: DTBAdSize, ccpaPrivacyString: String?, keywords: [String: String]) {
             loader = DTBAdLoader()
             loader.setAdSizes([adSize])
             if let ccpaPrivacyString {
                 loader.putCustomTarget(ccpaPrivacyString, withKey: "us_privacy")
+            }
+            for (key, value) in keywords {
+                loader.putCustomTarget(value, withKey: key)
             }
         }
 

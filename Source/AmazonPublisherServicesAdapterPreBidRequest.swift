@@ -65,11 +65,15 @@ public final class AmazonPublisherServicesAdapterPreBidRequest: NSObject {
     /// Amazon-specific info needed to load the APS ad.
     public let amazonSettings: AmazonSettings
 
+    /// Key-value pairs to be associated with the placement.
+    public let keywords: [String: String]
+
     /// Internal constructor.
-    init(mediationPlacement: String, format: String, bannerSize: BannerSize?, amazonSettings: AmazonSettings) {
+    init(mediationPlacement: String, format: String, bannerSize: BannerSize?, amazonSettings: AmazonSettings, keywords: [String: String]) {
         self.mediationPlacement = mediationPlacement
         self.format = format
         self.bannerSize = bannerSize
         self.amazonSettings = amazonSettings
+        self.keywords = keywords
     }
 }
