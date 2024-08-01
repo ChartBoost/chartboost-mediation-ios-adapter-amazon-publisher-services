@@ -14,7 +14,6 @@ import Foundation
 /// For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
 @objc
 public protocol AmazonPublisherServicesAdapterPreBiddingDelegate: AnyObject {
-
     /// Called by the Amazon Publishing Services adapter during pre-bidding, as part of the
     /// Chartboost ad load process.
     /// Here publishers should load an ad through the APS SDK, using the placement and format

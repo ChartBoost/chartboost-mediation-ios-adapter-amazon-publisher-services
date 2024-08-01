@@ -8,24 +8,19 @@ import DTBiOSSDK
 import Foundation
 
 /// The Chartboost Mediation Amazon Publisher Services adapter rewarded ad.
-final class AmazonPublisherServicesAdapterRewardedAd: AmazonPublisherServicesAdapterAd, PartnerAd {
-
-    /// The partner ad view to display inline. E.g. a banner view.
-    /// Should be nil for full-screen ads.
-    var inlineView: UIView? { nil }
-
+final class AmazonPublisherServicesAdapterRewardedAd: AmazonPublisherServicesAdapterAd, PartnerFullscreenAd {
     /// The APS ad dispatcher instance used to load an ad. We have strong reference here to keep it alive while the loading is ongoing.
     private var adLoader: DTBAdInterstitialDispatcher?
 
     /// Loads an ad.
     /// - parameter viewController: The view controller on which the ad will be presented on. Needed on load for some banners.
     /// - parameter completion: Closure to be performed once the ad has been loaded.
-    func load(with viewController: UIViewController?, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
+    func load(with viewController: UIViewController?, completion: @escaping (Error?) -> Void) {
         log(.loadStarted)
         guard !amazonAdapter.isDisabledDueToCOPPA else {
             let error = error(.loadFailurePrivacyOptIn, description: "Loading has been disabled due to COPPA restrictions")
             log(.loadFailed(error))
-            completion(.failure(error))
+            completion(error)
             return
         }
 
@@ -33,7 +28,7 @@ final class AmazonPublisherServicesAdapterRewardedAd: AmazonPublisherServicesAda
         guard let bidPayload else {
             let error = error(.loadFailureAuctionNoBid)
             log(.loadFailed(error))
-            completion(.failure(error))
+            completion(error)
             return
         }
 
@@ -49,22 +44,22 @@ final class AmazonPublisherServicesAdapterRewardedAd: AmazonPublisherServicesAda
     }
 
     /// Shows a loaded ad.
-    /// It will never get called for banner ads. You may leave the implementation blank for that ad format.
+    /// Chartboost Mediation SDK will always call this method from the main thread.
     /// - parameter viewController: The view controller on which the ad will be presented on.
     /// - parameter completion: Closure to be performed once the ad has been shown.
-    func show(with viewController: UIViewController, completion: @escaping (Result<PartnerEventDetails, Error>) -> Void) {
+    func show(with viewController: UIViewController, completion: @escaping (Error?) -> Void) {
         log(.showStarted)
         guard !amazonAdapter.isDisabledDueToCOPPA else {
             let error = error(.showFailurePrivacyOptIn, description: "Showing has been disabled due to COPPA restrictions")
             log(.showFailed(error))
-            completion(.failure(error))
+            completion(error)
             return
         }
 
         guard let ad = adLoader else {
             let error = error(.showFailureAdNotReady)
             log(.showFailed(error))
-            showCompletion?(.failure(error))
+            showCompletion?(error)
             return
         }
 
@@ -74,17 +69,16 @@ final class AmazonPublisherServicesAdapterRewardedAd: AmazonPublisherServicesAda
 }
 
 extension AmazonPublisherServicesAdapterRewardedAd: DTBAdInterstitialDispatcherDelegate {
-
     func interstitialDidLoad(_ interstitial: DTBAdInterstitialDispatcher?) {
         log(.loadSucceeded)
-        loadCompletion?(.success([:])) ?? log(.loadResultIgnored)
+        loadCompletion?(nil) ?? log(.loadResultIgnored)
         loadCompletion = nil
     }
 
     func interstitial(_ interstitial: DTBAdInterstitialDispatcher?, didFailToLoadAdWith errorCode: DTBAdErrorCode) {
         let error = partnerError(errorCode.rawValue)
         log(.loadFailed(error))
-        loadCompletion?(.failure(error)) ?? log(.loadResultIgnored)
+        loadCompletion?(error) ?? log(.loadResultIgnored)
         loadCompletion = nil
     }
 
@@ -94,7 +88,7 @@ extension AmazonPublisherServicesAdapterRewardedAd: DTBAdInterstitialDispatcherD
 
     func interstitialDidPresentScreen(_ interstitial: DTBAdInterstitialDispatcher?) {
         log(.showSucceeded)
-        showCompletion?(.success([:])) ?? log(.showResultIgnored)
+        showCompletion?(nil) ?? log(.showResultIgnored)
         showCompletion = nil
     }
 
@@ -104,7 +98,7 @@ extension AmazonPublisherServicesAdapterRewardedAd: DTBAdInterstitialDispatcherD
 
     func interstitialDidDismissScreen(_ interstitial: DTBAdInterstitialDispatcher?) {
         log(.didDismiss(error: nil))
-        delegate?.didDismiss(self, details: [:], error: nil) ?? log(.delegateUnavailable)
+        delegate?.didDismiss(self, error: nil) ?? log(.delegateUnavailable)
     }
 
     func interstitialWillLeaveApplication(_ interstitial: DTBAdInterstitialDispatcher?) {
@@ -113,7 +107,7 @@ extension AmazonPublisherServicesAdapterRewardedAd: DTBAdInterstitialDispatcherD
 
     func adClicked() {
         log(.didClick(error: nil))
-        delegate?.didClick(self, details: [:]) ?? log(.delegateUnavailable)
+        delegate?.didClick(self) ?? log(.delegateUnavailable)
     }
 
     func show(fromRootViewController controller: UIViewController) {
@@ -122,11 +116,11 @@ extension AmazonPublisherServicesAdapterRewardedAd: DTBAdInterstitialDispatcherD
 
     func impressionFired() {
         log(.didTrackImpression)
-        delegate?.didTrackImpression(self, details: [:]) ?? log(.delegateUnavailable)
+        delegate?.didTrackImpression(self) ?? log(.delegateUnavailable)
     }
 
     func videoPlaybackCompleted(_ interstitial: DTBAdInterstitialDispatcher) {
         log(.didReward)
-        delegate?.didReward(self, details: [:]) ?? log(.delegateUnavailable)
+        delegate?.didReward(self) ?? log(.delegateUnavailable)
     }
 }

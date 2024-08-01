@@ -3,6 +3,7 @@
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
+import ChartboostMediationSDK
 import Foundation
 
 /// A request model containing the info to be used by publishers to load an APS ad during pre-bidding.
@@ -12,11 +13,9 @@ import Foundation
 /// For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
 @objcMembers
 public final class AmazonPublisherServicesAdapterPreBidRequest: NSObject {
-
     @objc(AmazonPublisherServicesAdapterPreBidRequestPartnerSettings)
     @objcMembers
     public final class AmazonSettings: NSObject {
-
         /// Amazon slot UUID associated with the Chartboost Mediation placement name.
         public let partnerPlacement: String
 
@@ -52,19 +51,27 @@ public final class AmazonPublisherServicesAdapterPreBidRequest: NSObject {
     }
 
     /// Chartboost Mediation's placement identifier.
-    public let chartboostPlacement: String
+    public let mediationPlacement: String
 
     /// Ad format.
-    /// Refer to the raw values of Chartboost Mediation' AdFormat enum for possible values.
-    public let format: String
-    
+    /// Refer to the constants defined in PartnerAdFormats for possible values.
+    public let format: PartnerAdFormat
+
+    /// Ad size. `nil` for full-screen ads.
+    public let bannerSize: BannerSize?
+
     /// Amazon-specific info needed to load the APS ad.
     public let amazonSettings: AmazonSettings
 
+    /// Key-value pairs to be associated with the placement.
+    public let keywords: [String: String]
+
     /// Internal constructor.
-    init(chartboostPlacement: String, format: String, amazonSettings: AmazonSettings) {
-        self.chartboostPlacement = chartboostPlacement
+    init(mediationPlacement: String, format: String, bannerSize: BannerSize?, amazonSettings: AmazonSettings, keywords: [String: String]) {
+        self.mediationPlacement = mediationPlacement
         self.format = format
+        self.bannerSize = bannerSize
         self.amazonSettings = amazonSettings
+        self.keywords = keywords
     }
 }

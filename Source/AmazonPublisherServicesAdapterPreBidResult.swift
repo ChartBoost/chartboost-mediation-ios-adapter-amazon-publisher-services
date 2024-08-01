@@ -13,12 +13,10 @@ import Foundation
 /// For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
 @objcMembers
 public final class AmazonPublisherServicesAdapterPreBidResult: NSObject {
-
     /// APS Ad info obtained during pre-bidding.
     @objc(AmazonPublisherServicesAdapterPreBidAdInfo)
     @objcMembers
     public final class AdInfo: NSObject {
-
         /// The associated price point.
         /// Corresponds to `DTBAdResponse.amznSlots()`.
         public let pricePoint: String
@@ -29,7 +27,7 @@ public final class AmazonPublisherServicesAdapterPreBidResult: NSObject {
 
         /// Public constructor to create an ad info model.
         /// Generally ``AmazonPublisherServicesAdapterPreBidResult\init(adResponse:)`` should be used instead.
-        public init(pricePoint: String, bidPayload: [AnyHashable : Any]) {
+        public init(pricePoint: String, bidPayload: [AnyHashable: Any]) {
             self.pricePoint = pricePoint
             self.bidPayload = bidPayload
         }

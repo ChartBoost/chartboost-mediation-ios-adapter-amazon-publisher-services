@@ -12,7 +12,6 @@ import DTBiOSSDK
 /// The adapter handles APS initialization and prebidding only when the managed prebidding flag is enabled.
 /// For more information please contact the Amazon APS support team at https://aps.amazon.com/aps/contact-us/
 final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPublisherServicesAdapterPreBiddingDelegate {
-
     enum SetUpError: String, Error {
         case timeout = "Failed to be ready within the expected timeframe of 250ms"
     }
@@ -49,42 +48,40 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPub
     }
 
     /// Handles a prebid operation.
-    func onPreBid(request: AmazonPublisherServicesAdapterPreBidRequest, completion: @escaping (AmazonPublisherServicesAdapterPreBidResult) -> Void) {
+    func onPreBid(
+        request: AmazonPublisherServicesAdapterPreBidRequest,
+        completion: @escaping (AmazonPublisherServicesAdapterPreBidResult) -> Void
+    ) {
         // Fail if a pre-bid is already ongoing for this placement.
-        guard preBidders[request.chartboostPlacement] == nil else {
+        guard preBidders[request.mediationPlacement] == nil else {
             completion(.init(error: PreBidError.loadAlreadyInProgress))
             return
         }
 
         // Create the Amazon ad size object needed for the loader
         // Generate the Amazon Ad Size object.
-        guard let adSize = makeAmazonAdSize(format: request.format, settings: request.amazonSettings) else {
+        guard let adSize = makeAmazonAdSize(request: request) else {
             completion(.init(error: PreBidError.invalidPrebidSettings))
             return
         }
 
         // Create pre-bidder and start loading
-        let preBidder = PreBidder(adSize: adSize, ccpaPrivacyString: ccpaPrivacyString)
-        preBidders[request.chartboostPlacement] = preBidder   // hold on to the pre-bidder until it is done loading
+        let preBidder = PreBidder(adSize: adSize, ccpaPrivacyString: ccpaPrivacyString, keywords: request.keywords)
+        preBidders[request.mediationPlacement] = preBidder   // hold on to the pre-bidder until it is done loading
         preBidder.load { [weak self] result in
-            self?.preBidders[request.chartboostPlacement] = nil  // discard it so another load can happen
+            self?.preBidders[request.mediationPlacement] = nil  // discard it so another load can happen
             completion(result)
         }
     }
 
-    private func makeAmazonAdSize(
-        format: String,
-        settings: AmazonPublisherServicesAdapterPreBidRequest.AmazonSettings
-    ) -> DTBAdSize? {
-        switch format {
-        case AdFormat.banner.rawValue:
+    private func makeAmazonAdSize(request: AmazonPublisherServicesAdapterPreBidRequest) -> DTBAdSize? {
+        let settings = request.amazonSettings
+        switch request.format {
+        case PartnerAdFormats.banner:
             // Fixed banner format requires non-0 height
-            guard settings.height > 0 else {
+            guard request.bannerSize?.type != .fixed || settings.height > 0 else {
                 return nil
             }
-            fallthrough
-        // Not using the `.adaptiveBanner` case directly to maintain backward compatibility with Chartboost Mediation 4.0
-        case "adaptive_banner":
             // Banner format requires a non-0 width
             guard settings.width > 0 else {
                 return nil
@@ -103,13 +100,13 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPub
                     andSlotUUID: settings.partnerPlacement
                 )
             }
-        case AdFormat.interstitial.rawValue:
+        case PartnerAdFormats.interstitial:
             if settings.video {
                 return DTBAdSize(videoAdSizeWithSlotUUID: settings.partnerPlacement)
             } else {
                 return DTBAdSize(interstitialAdSizeWithSlotUUID: settings.partnerPlacement)
             }
-        case AdFormat.rewarded.rawValue:
+        case PartnerAdFormats.rewarded:
             // Currently, all rewarded ads from APS are video
             return DTBAdSize(
                 videoAdSizeWithPlayerWidth: Int(DTB_VIDEO_WIDTH),
@@ -124,19 +121,21 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPub
 
     /// Performs one pre-bid operation by loading a APS ad.
     private class PreBidder: DTBAdCallback {
-
         /// Internal Amazon APS ad loader.
         private let loader: DTBAdLoader
 
         /// Prebid load completion.
-        private var completion: ((AmazonPublisherServicesAdapterPreBidResult) -> Void)? = nil
+        private var completion: ((AmazonPublisherServicesAdapterPreBidResult) -> Void)?
 
         /// Initializes the pre-bidder.
-        init(adSize: DTBAdSize, ccpaPrivacyString: String?) {
+        init(adSize: DTBAdSize, ccpaPrivacyString: String?, keywords: [String: String]) {
             loader = DTBAdLoader()
             loader.setAdSizes([adSize])
             if let ccpaPrivacyString {
                 loader.putCustomTarget(ccpaPrivacyString, withKey: "us_privacy")
+            }
+            for (key, value) in keywords {
+                loader.putCustomTarget(value, withKey: key)
             }
         }
 
