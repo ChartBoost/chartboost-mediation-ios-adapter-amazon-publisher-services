@@ -55,21 +55,21 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPub
         // access on the main thread.
         DispatchQueue.main.async {
             // Fail if a pre-bid is already ongoing for this placement.
-            guard preBidders[request.chartboostPlacement] == nil else {
+            guard self.preBidders[request.chartboostPlacement] == nil else {
                 completion(.init(error: PreBidError.loadAlreadyInProgress))
                 return
             }
 
             // Create the Amazon ad size object needed for the loader
             // Generate the Amazon Ad Size object.
-            guard let adSize = makeAmazonAdSize(format: request.format, settings: request.amazonSettings) else {
+            guard let adSize = self.makeAmazonAdSize(format: request.format, settings: request.amazonSettings) else {
                 completion(.init(error: PreBidError.invalidPrebidSettings))
                 return
             }
 
             // Create pre-bidder and start loading
-            let preBidder = PreBidder(adSize: adSize, ccpaPrivacyString: ccpaPrivacyString)
-            preBidders[request.chartboostPlacement] = preBidder   // hold on to the pre-bidder until it is done loading
+            let preBidder = PreBidder(adSize: adSize, ccpaPrivacyString: self.ccpaPrivacyString)
+            self.preBidders[request.chartboostPlacement] = preBidder   // hold on to the pre-bidder until it is done loading
             preBidder.load { [weak self] result in
                 // Just in case the callback is not made on the main thread in the future.
                 DispatchQueue.main.async {
