@@ -52,25 +52,33 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPub
         request: AmazonPublisherServicesAdapterPreBidRequest,
         completion: @escaping (AmazonPublisherServicesAdapterPreBidResult) -> Void
     ) {
-        // Fail if a pre-bid is already ongoing for this placement.
-        guard preBidders[request.mediationPlacement] == nil else {
-            completion(.init(error: PreBidError.loadAlreadyInProgress))
-            return
-        }
+        // This method is called on a background thread, but `DTBAdLoader` calls its callback on the
+        // main thread. In order to have thread safe access to `preBidders`, we will synchronize
+        // access on the main thread.
+        DispatchQueue.main.async {
+            // Fail if a pre-bid is already ongoing for this placement.
+            guard self.preBidders[request.mediationPlacement] == nil else {
+                completion(.init(error: PreBidError.loadAlreadyInProgress))
+                return
+            }
 
-        // Create the Amazon ad size object needed for the loader
-        // Generate the Amazon Ad Size object.
-        guard let adSize = makeAmazonAdSize(request: request) else {
-            completion(.init(error: PreBidError.invalidPrebidSettings))
-            return
-        }
+            // Create the Amazon ad size object needed for the loader
+            // Generate the Amazon Ad Size object.
+            guard let adSize = self.makeAmazonAdSize(request: request) else {
+                completion(.init(error: PreBidError.invalidPrebidSettings))
+                return
+            }
 
-        // Create pre-bidder and start loading
-        let preBidder = PreBidder(adSize: adSize, ccpaPrivacyString: ccpaPrivacyString, keywords: request.keywords)
-        preBidders[request.mediationPlacement] = preBidder   // hold on to the pre-bidder until it is done loading
-        preBidder.load { [weak self] result in
-            self?.preBidders[request.mediationPlacement] = nil  // discard it so another load can happen
-            completion(result)
+            // Create pre-bidder and start loading
+            let preBidder = PreBidder(adSize: adSize, ccpaPrivacyString: self.ccpaPrivacyString, keywords: request.keywords)
+            self.preBidders[request.mediationPlacement] = preBidder   // hold on to the pre-bidder until it is done loading
+            preBidder.load { [weak self] result in
+                // Just in case the callback is not made on the main thread in the future.
+                DispatchQueue.main.async {
+                    self?.preBidders[request.mediationPlacement] = nil  // discard it so another load can happen
+                    completion(result)
+                }
+            }
         }
     }
 
@@ -121,6 +129,24 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPub
 
     /// Performs one pre-bid operation by loading a APS ad.
     private class PreBidder: DTBAdCallback {
+        private class WeakCallback: DTBAdCallback {
+            weak var weakCallback: DTBAdCallback?
+
+            init(_ weakCallback: DTBAdCallback) {
+                self.weakCallback = weakCallback
+            }
+
+            // MARK: - DTBAdCallback
+
+            func onFailure(_ error: DTBAdError) {
+                weakCallback?.onFailure?(error)
+            }
+
+            func onSuccess(_ adResponse: DTBAdResponse) {
+                weakCallback?.onSuccess(adResponse)
+            }
+        }
+
         /// Internal Amazon APS ad loader.
         private let loader: DTBAdLoader
 
@@ -141,7 +167,11 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPub
 
         func load(completion: @escaping (AmazonPublisherServicesAdapterPreBidResult) -> Void) {
             self.completion = completion
-            loader.loadAd(self)
+            // `DTBAdLoader` keeps a strong reference to the callback, and since we keep a strong 
+            // reference to the loader, this creates a retain loop. To fix this, we will wrap the
+            // callback with a weak reference to break the retain cycle.
+            let callback = WeakCallback(self)
+            loader.loadAd(callback)
         }
 
         // MARK: - DTBAdCallback
