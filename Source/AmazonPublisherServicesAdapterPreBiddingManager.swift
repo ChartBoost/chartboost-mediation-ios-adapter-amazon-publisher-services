@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Chartboost, Inc.
+// Copyright 2022-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -155,7 +155,7 @@ final class AmazonPublisherServicesAdapterPreBiddingManager: NSObject, AmazonPub
 
         /// Initializes the pre-bidder.
         init(adSize: DTBAdSize, ccpaPrivacyString: String?, keywords: [String: String]) {
-            loader = DTBAdLoader()
+            loader = DTBAdLoader(adNetworkInfo: .init(networkName: DTBADNETWORK_GOOGLE_AD_MANAGER))
             loader.setAdSizes([adSize])
             if let ccpaPrivacyString {
                 loader.putCustomTarget(ccpaPrivacyString, withKey: "us_privacy")
