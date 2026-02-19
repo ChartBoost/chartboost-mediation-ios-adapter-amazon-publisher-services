@@ -165,29 +165,17 @@ final class AmazonPublisherServicesAdapter: PartnerAdapter {
     /// - parameter consents: The new consents value, including both modified and unmodified consents.
     /// - parameter modifiedKeys: A set containing all the keys that changed.
     func setConsents(_ consents: [ConsentKey: ConsentValue], modifiedKeys: Set<ConsentKey>) {
-        // This partner supports TCFv2 strings for GDPR
+        // CCPA privacy string
         if modifiedKeys.contains(ConsentKeys.usp) {
             let privacyString = consents[ConsentKeys.usp]
             preBiddingManager.ccpaPrivacyString = privacyString
             log(.privacyUpdated(setting: "ccpaValue", value: privacyString))
         }
 
-        // GDPR consent
-        if modifiedKeys.contains(configuration.partnerID) || modifiedKeys.contains(ConsentKeys.gdprConsentGiven) {
-            let consent = consents[configuration.partnerID] ?? consents[ConsentKeys.gdprConsentGiven]
-            switch consent {
-            case ConsentValues.granted:
-                DTBAds.sharedInstance().setCmpFlavor(.CMP_NOT_DEFINED)
-                DTBAds.sharedInstance().setConsentStatus(.EXPLICIT_YES)
-                log(.privacyUpdated(setting: "consentStatus", value: "EXPLICIT_YES"))
-            case ConsentValues.denied:
-                DTBAds.sharedInstance().setCmpFlavor(.CMP_NOT_DEFINED)
-                DTBAds.sharedInstance().setConsentStatus(.EXPLICIT_NO)
-                log(.privacyUpdated(setting: "consentStatus", value: "EXPLICIT_NO"))
-            default:
-                break
-            }
-        }
+        // GDPR consent:
+        // APS SDK automatically reads TCFv2 consent strings from UserDefaults
+        // (stored under "IABTCF_TCString" by the Consent Management Platform).
+        // No explicit API call is needed.
     }
 
     /// Indicates that the user is underage signal has changed.
